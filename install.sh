@@ -13,9 +13,9 @@ INSTALLLOG=/var/log/easyengine/install.log
 LINUX_DISTRO=$(lsb_release -i |awk '{print $3}')
 
 # Checking Linux Distro Is Ubuntu
-if [ "$LINUX_DISTRO" != "CentOS" ] && [ "$LINUX_DISTRO" != "RedHatEnterpriseServer" ]
+if [ "$LINUX_DISTRO" != "CentOS" ]
 then
-	echo -e "\033[31mEasyEngine RHEL (ee) Is Made For Centos And Redhat Only As Of Now\e[0m"
+	echo -e "\033[31mEasyEngine Centos (ee) Is Made For Centos Only As Of Now\e[0m"
 	echo -e "\033[31mIf you are using ubuntu or debian, check out main branch here https://github.com/rtCamp/easyengine\e[0m"
 	exit 100
 fi
@@ -122,7 +122,7 @@ then
 	EE_BRANCH=stable
 else
 	# Cross Check The Branch Name
-	git ls-remote --heads https://github.com/rtCamp/easyengine | grep $EE_BRANCH &>> $INSTALLLOG
+	git ls-remote --heads https://github.com/mylivingweb/easyengine | grep $EE_BRANCH &>> $INSTALLLOG
 
 	if [ $? -ne 0 ]
 	then
@@ -137,7 +137,7 @@ echo -e "\033[36mCloning EasyEngine (ee) $EE_BRANCH Branch, Please Wait...\e[0m"
 rm -rf /tmp/easyengine &>> /dev/null
 
 # Clone EasyEngine (ee) Repository
-git clone -b $EE_BRANCH git://github.com/rtCamp/easyengine.git /tmp/easyengine &>> $INSTALLLOG || OwnError "Unable To Clone Easy Engine"
+git clone -b $EE_BRANCH git://github.com/mylivingweb/easyengine.git /tmp/easyengine &>> $INSTALLLOG || OwnError "Unable To Clone Easy Engine"
 
 
 # Create Directory /etc/easyengine
