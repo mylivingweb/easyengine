@@ -1,6 +1,6 @@
 <img src="https://d3qt5vpr7p9rgn.cloudfront.net/wp-content/uploads/2013/08/easy-engine-logo-2-RS1.png" alt="EasyEngine Logo" align="right" />
 
-[![Travis Build Status](https://travis-ci.org/rtCamp/easyengine.svg "Travis Build Status")] (https://travis-ci.org/rtCamp/easyengine)
+[![Travis Build Status](https://travis-ci.org/mylivingweb/easyengine.svg "Travis Build Status")] (https://travis-ci.org/mylivingweb/easyengine)
 
 easyengine (ee) is a linux shell-script collection, which makes it easy to manage your wordpress sites running on nginx web-server.
 
