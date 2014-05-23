@@ -4,7 +4,7 @@
 if [ ! -x  /usr/bin/lsb_release ]; then
 	echo -e "\033[31mThe lsb_release Command Not Found\e[0m"
 	echo -e "\033[36mInstalling lsb-release, Please Wait...\e[0m"
-	yum -y install redhat-lsb-core &>> /dev/null
+	yum -y install redhat-lsb-core &> /dev/null
 fi
 
 # Make Variables Available For Later Use
