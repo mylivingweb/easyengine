@@ -3,7 +3,7 @@ server {
 
 	listen 22222 default_server ssl spdy;
 
-	access_log   /var/log/nginx/eeadmin.access.log rt_cache;
+	access_log   /var/log/nginx/eeadmin.access.log;
 	error_log    /var/log/nginx/eeadmin.error.log;
 
 	ssl_certificate /var/www/22222/cert/22222.crt;
@@ -16,10 +16,9 @@ server {
 	index index.php index.htm index.html;
 
 	# Turn On Directory List
-	autoindex on;
+	autoindex off;
 
 	location / {
-		include common/acl.conf;
 		try_files $uri $uri/ /index.php?$args;
 	}
 
@@ -32,9 +31,11 @@ server {
 	}
 
 	location ~ \.php$ {
-		try_files $uri =404;
-		include fastcgi_params;
-		fastcgi_pass php;
-	}
+       root           /var/www/22222;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    }
 
 }

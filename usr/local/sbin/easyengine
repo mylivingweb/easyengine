@@ -6,6 +6,9 @@ ERRORLOG=/var/log/easyengine/error.log
 INSTALLLOG=/var/log/easyengine/install.log
 LINUX_DISTRO=$(lsb_release -i |awk '{print $3}')
 EE_IP_ADDRESS=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+EPELREPO=/etc/yum.repos.d/epel.repo
+NGINXREPO=/etc/yum.repos.d/nginx.repo
+REMIREPO=/etc/yum.repos.d/remi.repo
 
 # Main EasyEngine Function To Log All The Outputs
 EasyEngine()
@@ -47,8 +50,10 @@ APTASSUMEYES ()
 #Add Nginx repo 
 NGINXREPO()
 {
-	if [ "$LINUX_DISTRO" == "CentOS" ]
+	if [ -f $NGINXREPO ]	
 	then
+		echo -e "\033[36m Nginx Repository is already installed, moving on...\e[0m"
+	else
 		# Add Nginx Repository
 		echo -e "\033[36mAdding Nginx Repository, Please Wait...\e[0m"
 		rpm -Uvh http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm &>> $INSTALLLOG || OwnError "Unable To Add Nginx Repository"
@@ -58,8 +63,10 @@ NGINXREPO()
 #Add EPEL Repo
 EPELREPO()
 {
-	if [ "$LINUX_DISTRO" == "CentOS" ]
+	if [ -f $EPELREPO ]
 	then
+		echo -e "\033[36m EPEL Repository is already installed, moving on...\e[0m"
+	else
 		# Add EPEL Repository
 		echo -e "\033[36mAdding EPEL Repository, Please Wait...\e[0m"
 		rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm &>> $INSTALLLOG || OwnError "Unable To Add EPEL Repository"
@@ -69,8 +76,10 @@ EPELREPO()
 #Add REMI Repo
 REMIREPO()
 {
-	if [ "$LINUX_DISTRO" == "CentOS" ]
+	if [ -f $REMIREPO ]
 	then
+		echo -e "\033[36m REMI Repository is already installed, moving on...\e[0m"
+	else
 		# Add REMI Repository
 		echo -e "\033[36mAdding REMI Repository, Please Wait...\e[0m"
 		rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm &>> $INSTALLLOG || OwnError "Unable To Add REMI Repository"
@@ -78,7 +87,21 @@ REMIREPO()
 	fi
 
 }
+NGINXINSTALLTWEAKS ()
+{
+	# Define Nginx Package
+	NGINXPACKAGE=nginx
+}
 
+INSTALLNGINX()
+{
+	# Select Nginx Package
+	NGINXINSTALLTWEAKS
+
+	# Install Nginx Package
+	echo -e "\033[34mInstalling Nginx, Please Wait...\e[0m"
+	$EEAPTGET install $NGINXPACKAGE || OwnError "Unable To Install Nginx"
+}
 HTTPAUTH()
 {
 	# Get The htpasswd Details
@@ -125,7 +148,7 @@ COMMONNGINX()
 	then
 
 		# Change Nginx Main Section Settings	
-		sed -i "s/worker_processes.*/worker_processes auto;/" /etc/nginx/nginx.conf
+		sed -i "s/worker_processes.*/worker_processes 4;/" /etc/nginx/nginx.conf
 		sed -i "/worker_processes/a \worker_rlimit_nofile 100000;" /etc/nginx/nginx.conf
 
 		# Change Nginx Events Section Settings
@@ -133,13 +156,10 @@ COMMONNGINX()
 		sed -i "s/# multi_accept/multi_accept/" /etc/nginx/nginx.conf
 
 		# Disable Nginx Version Set Custom Headers Proxy And SSL Settings
-		sed -i "s/http {/http {\n\t##\n\t# Easy Engine Settings\n\t##\n\n\tserver_tokens off;\n\treset_timedout_connection on;\n\tadd_header X-Powered-By "EasyEngine";\n\tadd_header rt-Fastcgi-Cache \$upstream_cache_status;\n\n\t# Limit Request\n\tlimit_req_status 403;\n\tlimit_req_zone \$binary_remote_addr zone=one:10m rate=1r\/s;\n\n\t# Proxy Settings\n\t# set_real_ip_from\tproxy-server-ip;\n\t# real_ip_header\tX-Forwarded-For;\n\n\tfastcgi_read_timeout 300;\n\tclient_max_body_size 100m;\n\n\t# SSL Settings\n\tssl_session_cache shared:SSL:20m;\n\tssl_session_timeout 10m;\n\tssl_prefer_server_ciphers on;\n\tssl_ciphers HIGH:\!aNULL:\!MD5:\!kEDH;\n\n/" /etc/nginx/nginx.conf
+		sed -i "s/http {/http {\n\t##\n\t# Easy Engine Settings\n\t##\n\n\tserver_tokens off;\n\treset_timedout_connection on;\n\tadd_header X-Powered-By "the www";\n\tadd_header rt-Fastcgi-Cache \$upstream_cache_status;\n\n\t# Limit Request\n\tlimit_req_status 403;\n\tlimit_req_zone \$binary_remote_addr zone=one:10m rate=1r\/s;\n\n\t# Proxy Settings\n\t# set_real_ip_from\tproxy-server-ip;\n\t# real_ip_header\tX-Forwarded-For;\n\n\tfastcgi_read_timeout 300;\n\tclient_max_body_size 100m;\n\n\t# SSL Settings\n\tssl_session_cache shared:SSL:20m;\n\tssl_session_timeout 10m;\n\tssl_prefer_server_ciphers on;\n\tssl_ciphers HIGH:\!aNULL:\!MD5:\!kEDH;\n\n/" /etc/nginx/nginx.conf
 
 		# Change Keepalive Timeout Settings
 		sed -i "s/keepalive_timeout.*/keepalive_timeout 30;/" /etc/nginx/nginx.conf
-
-		# Set Custom Logs
-		sed -i "s/error_log.*/error_log \/var\/log\/nginx\/error.log;\n\n\tlog_format rt_cache '\$remote_addr \$upstream_response_time \$upstream_cache_status [\$time_local] '\n\t\t'\$http_host \"\$request\" \$status \$body_bytes_sent '\n\t\t'\"\$http_referer\" \"\$http_user_agent\"';/" /etc/nginx/nginx.conf
 
 		# Enable Gzip
 		sed -i "s/# gzip/gzip/" /etc/nginx/nginx.conf
@@ -165,8 +185,8 @@ COMMONNGINX()
 	EESOURCE="/usr/share/easyengine/nginx/common"
 	EEDEST="/etc/nginx/common"
 	
-	cp /usr/share/easyengine/nginx/22222 /etc/nginx/sites-available/ || OwnError "Unable To Copy 22222 Nginx Configuration File"
-	ln -s /etc/nginx/sites-available/22222 /etc/nginx/sites-enabled/ || OwnError "Unable To Create Symbolic Link For 22222 Nginx Configuration"
+	cp /usr/share/easyengine/nginx/22222 /etc/nginx/conf.d/22222.conf || OwnError "Unable To Copy 22222 Nginx Configuration File"
+	#ln -s /etc/nginx/conf.d/22222.conf /etc/nginx/sites-enabled/ || OwnError "Unable To Create Symbolic Link For 22222 Nginx Configuration"
 
 	# EasyEngine Admin Logs Setup
 	if [ ! -d /var/www/22222/logs ]
@@ -175,8 +195,8 @@ COMMONNGINX()
 	fi
 
 	# Symbolic Links
-	ln -s /var/log/nginx/eeadmin.access.log /var/www/22222/logs/access.log
-	ln -s /var/log/nginx/eeadmin.error.log /var/www/22222/logs/error.log
+	#ln -s /var/log/nginx/eeadmin.access.log /var/www/22222/logs/access.log
+	#ln -s /var/log/nginx/eeadmin.error.log /var/www/22222/logs/error.log
 
 	# EasyEngine Admin SSL Setup
 	if [ ! -d /var/www/22222/cert ]
@@ -202,20 +222,6 @@ COMMONNGINX()
 	openssl x509 -req -days 3652 -in /var/www/22222/cert/22222.csr -signkey /var/www/22222/cert/22222.key -out /var/www/22222/cert/22222.crt &>> $INSTALLLOG \
 	|| OwnError "Unable To Generate SSL Certificate"
 
-	# White List IP Address
-	echo -e "\033[36mEasyEngine (ee) Allow To Access Protected Files By Using Whitelisted IP Address Or HTTP Authentication\e[0m"
-	if [ -n "$EE_IP_ADDRESS" ]
-	then
-		for WHITELIST_IP_ADDRESS in $(echo $EE_IP_ADDRESS)
-		do
-        	sed -i "/deny/i $(echo allow $WHITELIST_IP_ADDRESS\;)" /etc/nginx/common/acl.conf
-		done
-	else
-		echo -e "\033[36mEasyEngine (ee) Don't Find IP Address in /etc/easyengine/ee.conf file\e[0m"
-	fi
-
-	# Protect EE Locations
-	HTTPAUTH
 }
 
 INSTALLPHP()
@@ -240,7 +246,7 @@ COMMONPHP()
 		mkdir -p /var/log/php/ || OwnError "Unable To Create php Log Directory: /var/log/php/"
 	fi
 
-	grep "Easy Engine" /etc/php/fpm/php.ini &> /dev/null
+	grep "Easy Engine" /etc/php.ini &> /dev/null
 	if [ $? -ne 0 ]
 	then
 
@@ -261,29 +267,29 @@ COMMONPHP()
 		sed -i "s'error_log.*'error_log = /var/log/php/fpm.log'" /etc/php/fpm/php-fpm.conf
 
 		# Enable PHP Status & Ping
-		sed -i "s/;ping.path/ping.path/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/;pm.status_path/pm.status_path/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/;ping.path/ping.path/" /etc/php-fpm.d/www.conf
+		sed -i "s/;pm.status_path/pm.status_path/" /etc/php-fpm.d/www.conf
 
 		# Change PHP Pool Settings MAX Servers & Request Terminate Timeout
-		sed -i "s/;pm.max_requests/pm.max_requests/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/pm.max_children = 5/pm.max_children = 100/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/pm.start_servers = 2/pm.start_servers = 20/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 10/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 30/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/;request_terminate_timeout.*/request_terminate_timeout = 300/" /etc/php/fpm/pool.d/www.conf
-		sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/fpm/pool.d/www.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
+		sed -i "s/;pm.max_requests/pm.max_requests/" /etc/php-fpm.d/www.conf
+		sed -i "s/pm.max_children = 5/pm.max_children = 100/" /etc/php-fpm.d/www.conf
+		sed -i "s/pm.start_servers = 2/pm.start_servers = 20/" /etc/php-fpm.d/www.conf
+		sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 10/" /etc/php-fpm.d/www.conf
+		sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 30/" /etc/php-fpm.d/www.conf
+		sed -i "s/;request_terminate_timeout.*/request_terminate_timeout = 300/" /etc/php-fpm.d/www.conf
+		sed -i "s/pm = dynamic/pm = ondemand/" /etc/php-fpm.d/www.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
 		
 		# Change PHP Fastcgi Socket
-		sed -i "s'listen = /var/run/php-fpm.sock'listen = 127.0.0.1:9000'" /etc/php/fpm/pool.d/www.conf || OwnError "Unable To Change PHP Fastcgi Socket"
+		sed -i "s'listen = /var/run/php-fpm.sock'listen = 127.0.0.1:9000'" /etc/php-fpm.d/www.conf || OwnError "Unable To Change PHP Fastcgi Socket"
 
 		# Separate PHP POOL For Slow Logs
-		cp /etc/php/fpm/pool.d/www.conf /etc/php/fpm/pool.d/debug.conf
-		sed -i "s'\[www\]'[debug]'" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Pool Name"
-		sed -i "s'listen = 127.0.0.1:9000'listen = 127.0.0.1:9001'" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Fastcgi Listen Port"
-		#sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
-		sed -i "s';slowlog.*'slowlog = /var/log/php/slow.log'"  /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Slowlog"
-		sed -i "s';request_slowlog_timeout.*'request_slowlog_timeout = 10s'"  /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Request Slowlog Timeout"
-		echo -e "php_admin_value[xdebug.profiler_output_dir] = /tmp/ \nphp_admin_value[xdebug.profiler_output_name] = cachegrind.out.%p-%H-%R \nphp_admin_flag[xdebug.profiler_enable_trigger] = on \nphp_admin_flag[xdebug.profiler_enable] = off" | tee -ai  /etc/php/fpm/pool.d/debug.conf &>> $INSTALLLOG \
+		cp /etc/php-fpm.d/www.conf /etc/php-fpm.d/debug.conf
+		sed -i "s'\[www\]'[debug]'" /etc/php-fpm.d/debug.conf || OwnError "Unable To Change PHP Pool Name"
+		sed -i "s'listen = 127.0.0.1:9000'listen = 127.0.0.1:9001'" /etc/php-fpm.d/debug.conf || OwnError "Unable To Change PHP Fastcgi Listen Port"
+		#sed -i "s/pm = dynamic/pm = ondemand/" /etc/php-fpm.d/debug.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
+		sed -i "s';slowlog.*'slowlog = /var/log/php/slow.log'"  /etc/php-fpm.d/debug.conf || OwnError "Unable To Change PHP Slowlog"
+		sed -i "s';request_slowlog_timeout.*'request_slowlog_timeout = 10s'"  /etc/php-fpm.d/debug.conf || OwnError "Unable To Change PHP Request Slowlog Timeout"
+		echo -e "php_admin_value[xdebug.profiler_output_dir] = /tmp/ \nphp_admin_value[xdebug.profiler_output_name] = cachegrind.out.%p-%H-%R \nphp_admin_flag[xdebug.profiler_enable_trigger] = on \nphp_admin_flag[xdebug.profiler_enable] = off" | tee -ai  /etc/php-fpm.d/debug.conf &>> $INSTALLLOG \
 		|| OwnError "Unable To Add Xdebug Settings"
 	fi
 }
@@ -518,9 +524,7 @@ COMMONMYSQL()
 
 POSTFIXINSTALLTWEAKS()
 {
-	# Setting Up Postfix
-	debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
-	debconf-set-selections <<< "postfix postfix/mailname string $(hostname -f)"
+	tail
 }
 
 INSTALLPOSTFIX()
@@ -923,7 +927,7 @@ EECREATEDATABASE()
 PHPUSERINFO()
 {
 	# PHP User
-	PHPUSER=$(grep ^user /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2 | cut -d' ' -f2) \
+	PHPUSER=$(grep ^user /etc/php-fpm.d/www.conf | cut -d'=' -f2 | cut -d' ' -f2) \
 	|| OwnError "Unable To Find Out PHP Username"
 }
 
@@ -959,16 +963,16 @@ EEINFO()
 	PHPMAXEXECUTIONTIME=$(grep max_execution_time /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
 
 	# Collect Information From www.conf
-	PHPPINGPATH=$(grep ^ping.path /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPSTATUSPATH=$(grep ^pm.status_path /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPFPMPROCESS=$(grep "^pm =" /etc/php/fpm/pool.d/www.conf | awk '{print $3}')
-	PMMAXREQUEST=$(grep ^pm.max_requests /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMAXCHILDREN=$(grep ^pm.max_children /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMSTARTSERVERS=$(grep ^pm.start_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMINSPARESERVERS=$(grep ^pm.min_spare_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMAXSPARESERVERS=$(grep ^pm.max_spare_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPREQUESTTERMINATE=$(grep ^request_terminate_timeout /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPFASTCGIREQUEST=$(grep ^listen /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPPINGPATH=$(grep ^ping.path /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPSTATUSPATH=$(grep ^pm.status_path /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPFPMPROCESS=$(grep "^pm =" /etc/php-fpm.d/www.conf | awk '{print $3}')
+	PMMAXREQUEST=$(grep ^pm.max_requests /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMAXCHILDREN=$(grep ^pm.max_children /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMSTARTSERVERS=$(grep ^pm.start_servers /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMINSPARESERVERS=$(grep ^pm.min_spare_servers /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMAXSPARESERVERS=$(grep ^pm.max_spare_servers /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPREQUESTTERMINATE=$(grep ^request_terminate_timeout /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPFASTCGIREQUEST=$(grep ^listen /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
 
 	echo -e "\033[36m\n\nPHP ($PHPVER) Information:\n\e[0m"
 	echo -e "\033[36mPHP User:\t\t\t \033[37m$PHPUSER\e[0m"
@@ -1023,10 +1027,10 @@ EESITEINFO()
 {
 	# Display The Specific Site Configuration
 	SITESTATUS=$(ls /etc/nginx/sites-enabled/$DOMAIN &> /dev/null && echo Enable || echo Disable)
-	SITEINFO=$(head -n1 /etc/nginx/sites-available/$DOMAIN | grep "NGINX CONFIGURATION" | rev | cut -d' ' -f3,4,5,6,7 | rev | cut -d ' ' -f2,3,4,5)
-	ACCESSLOG=$(grep access_log /etc/nginx/sites-available/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
-	ERRORLOG=$(grep error_log /etc/nginx/sites-available/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
-	WEBROOT=$(grep root /etc/nginx/sites-available/$DOMAIN | grep htdocs | awk '{print($2)}'  | cut -d ';' -f1)
+	SITEINFO=$(head -n1 /etc/nginx/conf.d/$DOMAIN | grep "NGINX CONFIGURATION" | rev | cut -d' ' -f3,4,5,6,7 | rev | cut -d ' ' -f2,3,4,5)
+	ACCESSLOG=$(grep access_log /etc/nginx/conf.d/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
+	ERRORLOG=$(grep error_log /etc/nginx/conf.d/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
+	WEBROOT=$(grep root /etc/nginx/conf.d/$DOMAIN | grep htdocs | awk '{print($2)}'  | cut -d ';' -f1)
 	WPDBNAME=$(grep DB_NAME /var/www/$DOMAIN/wp-config.php 2> /dev/null | cut -d"'" -f4)
 
 	echo -e "\033[36m$DOMAIN Information:\n\e[0m"
@@ -1040,7 +1044,7 @@ EESITEINFO()
 EESITEEDIT()
 {
 	# Open Website In Default Editor
-	sensible-editor /etc/nginx/sites-available/$DOMAIN 2> /dev/null
+	sensible-editor /etc/nginx/conf.d/$DOMAIN 2> /dev/null
 }
 
 NGINXBUCKETSIZE()
@@ -1172,14 +1176,14 @@ NGINXSYMBOLICLINK()
 {
 	# Creating Symbolic Link
 	echo -e "\033[36mCreating Symbolic Link For $DOMAIN\e[0m"
-	ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/ \
+	ln -s /etc/nginx/conf.d/$DOMAIN /etc/nginx/sites-enabled/ \
 	|| OwnError "Unable To Create Symbolic Link For $DOMAIN"
 }
 
 EEDOMAINSETUP()
 {
 	#Check The Nginx Configuration Exist For $DOMAIN
-	ls /etc/nginx/sites-available/$DOMAIN &> $ERRORLOG
+	ls /etc/nginx/conf.d/$DOMAIN &> $ERRORLOG
 
 	if [ $? -ne 0 ]
 	then
@@ -1187,7 +1191,7 @@ EEDOMAINSETUP()
 		echo -e "\033[36mCreating $DOMAIN, Please Wait...\e[0m"
 		sed "s/example.com/$DOMAIN/g" \
 		/usr/share/easyengine/nginx/$NGINXCONF \
-		> /etc/nginx/sites-available/$DOMAIN \
+		> /etc/nginx/conf.d/$DOMAIN \
 		|| OwnError "Unable To Create Nginx Configuration File For $DOMAIN"
 
 		# Creating Symbolic Link
@@ -1385,7 +1389,7 @@ SETUPWPNETWORK()
 REMOVEDB()
 {
 	# HTML & PHP Website Doesn't Have Database
-	head -n1 /etc/nginx/sites-available/$DOMAIN | egrep -e 'HTML|PHP' &>> $INSTALLLOG
+	head -n1 /etc/nginx/conf.d/$DOMAIN | egrep -e 'HTML|PHP' &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# MySQL Information
@@ -1472,7 +1476,7 @@ REMOVENGINXCONF()
 	if [ "$ANSWER" = "y" ]
 	then
 		# Remove Webroot
-		rm -rf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN \
+		rm -rf /etc/nginx/conf.d/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN \
 		|| OwnError "Unable To Remove $DOMAIN Nginx Configuration"
 	else
 		# User Denied Messages
@@ -1559,12 +1563,12 @@ DEBUG_NGINX_REWRITE_STOP()
 
 DEBUG_NGINX_SITE()
 {
-	grep "error.log debug" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+	grep "error.log debug" /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# Enable Nginx Debug Log
 		echo -e "\033[36mSetting Up $DOMAIN Error Logs In Debugging Mode,Please Wait...\e[0m"
-		sed -i "s/error.log;/error.log debug;/" /etc/nginx/sites-available/$DOMAIN
+		sed -i "s/error.log;/error.log debug;/" /etc/nginx/conf.d/$DOMAIN
 	else
 		# Lets Disable Nginx Reload Trigger
 		EE_DEBUG_NGINX=""
@@ -1574,12 +1578,12 @@ DEBUG_NGINX_SITE()
 
 DEBUG_NGINX_SITE_STOP()
 {
-	grep "error.log debug" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+	grep "error.log debug" /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 	if [ $? -eq 0 ]
 	then
 		# Disable Nginx Debug Log
 		echo -e "\033[36mDisable $DOMAIN Error Logs In Debugging Mode,Please Wait...\e[0m"
-		sed -i "s/error.log debug;/error.log;/" /etc/nginx/sites-available/$DOMAIN
+		sed -i "s/error.log debug;/error.log;/" /etc/nginx/conf.d/$DOMAIN
 	else
 		# Lets Disable Nginx Reload Trigger
 		EE_DEBUG_NGINX=""
@@ -1589,12 +1593,12 @@ DEBUG_NGINX_SITE_STOP()
 
 DEBUG_NGINX_REWRITE_SITE()
 {
-	grep "rewrite_log on;" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+	grep "rewrite_log on;" /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# Enable Nginx Rewrite Logs
 		echo -e "\033[36mSetting Up Nginx Rewrite Logs For $DOMAIN\e[0m"
-		sed -i "/access_log/i \\\trewrite_log on;" /etc/nginx/sites-available/$DOMAIN
+		sed -i "/access_log/i \\\trewrite_log on;" /etc/nginx/conf.d/$DOMAIN
 	else
 		# Lets Disable Nginx Reload Trigger
 		EE_DEBUG_REWRITE=""
@@ -1604,12 +1608,12 @@ DEBUG_NGINX_REWRITE_SITE()
 
 DEBUG_NGINX_REWRITE_SITE_STOP()
 {
-	grep "rewrite_log on;" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+	grep "rewrite_log on;" /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 	if [ $? -eq 0 ]
 	then
 		# Disable Nginx Rewrite Logs
 		echo -e "\033[36mStopping Up Nginx Rewrite Logs For $DOMAIN\e[0m"
-		sed -i "/rewrite_log.*/d" /etc/nginx/sites-available/$DOMAIN
+		sed -i "/rewrite_log.*/d" /etc/nginx/conf.d/$DOMAIN
 	else
 		# Lets Disable Nginx Reload Trigger
 		EE_DEBUG_REWRITE=""
@@ -1636,11 +1640,11 @@ DEBUG_PHP()
 			echo -e "\033[36mphp-FPM Slow Log Already Enabled\e[0m"
 		fi
 	else
-		grep 9001 /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+		grep 9001 /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 		if [ $? -ne 0 ]
 		then
 			echo -e "\033[36mEnable php-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
-			sed -i "s/fastcgi_pass.*/fastcgi_pass debug;/g" /etc/nginx/sites-available/$DOMAIN
+			sed -i "s/fastcgi_pass.*/fastcgi_pass debug;/g" /etc/nginx/conf.d/$DOMAIN
 
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
@@ -1669,11 +1673,11 @@ DEBUG_PHP_STOP()
 			echo -e "\033[36mphp-FPM Slow Log Already Disabled\e[0m"
 		fi
 	else
-		grep "fastcgi_pass debug;" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
+		grep "fastcgi_pass debug;" /etc/nginx/conf.d/$DOMAIN &>> $INSTALLLOG
 		if [ $? -eq 0 ]
 		then
 			echo -e "\033[36mDisable php-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
-			sed -i "s/fastcgi_pass.*/fastcgi_pass php;/g" /etc/nginx/sites-available/$DOMAIN
+			sed -i "s/fastcgi_pass.*/fastcgi_pass php;/g" /etc/nginx/conf.d/$DOMAIN
 
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
@@ -1911,7 +1915,6 @@ then
 			GPGKEY
 
 			# Update The APT Cache
-			UPDATEAPT
 
 			# Install php
 			INSTALLPHP
@@ -1956,7 +1959,7 @@ then
 			#GPGKEY
 
 			# Update The APT Cache
-			UPDATEAPT
+			
 
 			# Install MySQL
 			INSTALLMYSQL
@@ -1978,7 +1981,7 @@ then
 		then
 
 			# Update The APT Cache
-			UPDATEAPT
+			
 			
 			# Install Postfix
 			INSTALLPOSTFIX
@@ -1994,22 +1997,13 @@ then
 		then
 			
 			# Install Python Software Properties
-			PYTHONSOFTWARE
+			
 
-            # Add Nginx Launchpad Repository
+            # Add Nginx  Repository
 			NGINXREPO
 			
-			# Add PHP Launchpad Repository
+			# Add EPEL Repository
 			EPELREPO
-
-			# Add Percona Repository
-			#PERCONA_REPO
-
-			# Fix GPG Key Problems
-			GPGKEY
-
-			# Update The APT Cache
-			UPDATEAPT
 
 			# Install Nginx php MySQL Postfix
 			INSTALLALL
@@ -2296,7 +2290,7 @@ then
 
 			# Display The List Of Available Sites
 			echo -e "\033[36mDisplay The List Of Available Websites:\e[0m"
-			ls /etc/nginx/sites-available/ \
+			ls /etc/nginx/conf.d/ \
 			|| OwnError "Unable To Display The List Of Available Websites"
 
 		else
@@ -2315,7 +2309,7 @@ then
 		EESITENAME
 		
 		# Check The Website Is Exist
-		ls /etc/nginx/sites-available/$DOMAIN &> /dev/null \
+		ls /etc/nginx/conf.d/$DOMAIN &> /dev/null \
 		|| OwnError "The $DOMAIN Is Not Found In Available Websites List"
 
 		if [ $? -eq 0 ]
@@ -2323,7 +2317,7 @@ then
 
 			# Display The Specific Site Configuration
 			echo -e "\033[36mDisplay Nginx Configuration For $DOMAIN\e[0m"
-			cat /etc/nginx/sites-available/$DOMAIN \
+			cat /etc/nginx/conf.d/$DOMAIN \
 			|| OwnError "Unable To Display Nginx Configuration For $DOMAIN"
 
 		fi
@@ -2898,7 +2892,7 @@ then
 		# Edit The Nginx Configuration For $DOMAIN
 		EESITEEDIT
 		
-		if [ $(cd /etc/nginx; git status -s /etc/nginx/sites-available/$DOMAIN | wc -l) -ne 0 ]
+		if [ $(cd /etc/nginx; git status -s /etc/nginx/conf.d/$DOMAIN | wc -l) -ne 0 ]
 		then
 			# Take Nginx Configuration In Git Version Control
 			EEGITDIR=/etc/nginx
@@ -2941,7 +2935,7 @@ then
 		[ "$ARGS" = "--wp" ] && EE_DEBUG_WP=$ARGS && echo EE_DEBUG_WP = $EE_DEBUG_WP &>> $INSTALLLOG
 		if [ "$ARGS" != "debug" ] && [ "$ARGS" != "-i" ] && [ "$ARGS" != "--start" ] && [ "$ARGS" != "--stop" ] && [ "$ARGS" != "--nginx" ] && [ "$ARGS" != "--rewrite" ] && [ "$ARGS" != "--php" ] && [ "$ARGS" != "--fpm" ] && [ "$ARGS" != "--mysql" ] && [ "$ARGS" != "--wp" ] 
 		then
-			ls /etc/nginx/sites-available/ | grep $ARGS &>> $INSTALLLOG
+			ls /etc/nginx/conf.d/ | grep $ARGS &>> $INSTALLLOG
 			if [ $? -eq 0 ]
 			then
 				EE_DEBUG_SITENAME=$ARGS && echo EE_DEBUG_SITENAME = $EE_DEBUG_SITENAME &>> $INSTALLLOG
