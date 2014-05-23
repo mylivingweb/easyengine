@@ -220,7 +220,7 @@ COMMONNGINX()
 
 INSTALLPHP()
 {
-	# Install PHP5
+	# Install php
 	echo -e "\033[36mRemoving earlier versions of PHP and mysql, Please Wait...\e[0m"
 	yum -y remove php* mysql
 	echo -e "\033[36mInstalling PHP and mysql, Please Wait...\e[0m"
@@ -234,56 +234,56 @@ COMMONPHP()
 	# Personal Settings For PHP
 	echo -e "\033[36mUpdating PHP Configuration Files, Please Wait...\e[0m"
 
-	# Needed For Custome PHP5 Logs
-	if [ ! -d /var/log/php5/ ]
+	# Needed For Custom php Logs
+	if [ ! -d /var/log/php/ ]
 	then
-		mkdir -p /var/log/php5/ || OwnError "Unable To Create PHP5 Log Directory: /var/log/php5/"
+		mkdir -p /var/log/php/ || OwnError "Unable To Create php Log Directory: /var/log/php/"
 	fi
 
-	grep "Easy Engine" /etc/php5/fpm/php.ini &> /dev/null
+	grep "Easy Engine" /etc/php/fpm/php.ini &> /dev/null
 	if [ $? -ne 0 ]
 	then
 
 		TIME_ZONE=$(cat /etc/timezone | head -n1 | sed "s'/'\\\/'")
 
 		# Move PHP’s Session Storage To Memcache
-		sed -i "/extension/a \session.save_handler = memcache\nsession.save_path = \"tcp://localhost:11211\"" /etc/php5/mods-available/memcache.ini
+		sed -i "/extension/a \session.save_handler = memcache\nsession.save_path = \"tcp://localhost:11211\"" /etc/php/mods-available/memcache.ini
 
 		# Change PHP Settings
-		sed -i "s/\[PHP\]/[PHP]\n; Easy Engine/" /etc/php5/fpm/php.ini
-		sed -i "s/expose_php.*/expose_php = Off/" /etc/php5/fpm/php.ini
-		sed -i "s/post_max_size.*/post_max_size = 100M/" /etc/php5/fpm/php.ini
-		sed -i "s/upload_max_filesize.*/upload_max_filesize = 100M/" /etc/php5/fpm/php.ini
-		sed -i "s/max_execution_time.*/max_execution_time = 300/" /etc/php5/fpm/php.ini
-		sed -i "s/;date.timezone.*/date.timezone = $TIME_ZONE/" /etc/php5/fpm/php.ini
+		sed -i "s/\[PHP\]/[PHP]\n; Easy Engine/" /etc/php/fpm/php.ini
+		sed -i "s/expose_php.*/expose_php = Off/" /etc/php/fpm/php.ini
+		sed -i "s/post_max_size.*/post_max_size = 100M/" /etc/php/fpm/php.ini
+		sed -i "s/upload_max_filesize.*/upload_max_filesize = 100M/" /etc/php/fpm/php.ini
+		sed -i "s/max_execution_time.*/max_execution_time = 300/" /etc/php/fpm/php.ini
+		sed -i "s/;date.timezone.*/date.timezone = $TIME_ZONE/" /etc/php/fpm/php.ini
 
-		# Change PHP5-FPM Error Logs Location
-		sed -i "s'error_log.*'error_log = /var/log/php5/fpm.log'" /etc/php5/fpm/php-fpm.conf
+		# Change php-FPM Error Logs Location
+		sed -i "s'error_log.*'error_log = /var/log/php/fpm.log'" /etc/php/fpm/php-fpm.conf
 
 		# Enable PHP Status & Ping
-		sed -i "s/;ping.path/ping.path/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/;pm.status_path/pm.status_path/" /etc/php5/fpm/pool.d/www.conf
+		sed -i "s/;ping.path/ping.path/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/;pm.status_path/pm.status_path/" /etc/php/fpm/pool.d/www.conf
 
 		# Change PHP Pool Settings MAX Servers & Request Terminate Timeout
-		sed -i "s/;pm.max_requests/pm.max_requests/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/pm.max_children = 5/pm.max_children = 100/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/pm.start_servers = 2/pm.start_servers = 20/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 10/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 30/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/;request_terminate_timeout.*/request_terminate_timeout = 300/" /etc/php5/fpm/pool.d/www.conf
-		sed -i "s/pm = dynamic/pm = ondemand/" /etc/php5/fpm/pool.d/www.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
+		sed -i "s/;pm.max_requests/pm.max_requests/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/pm.max_children = 5/pm.max_children = 100/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/pm.start_servers = 2/pm.start_servers = 20/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 10/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 30/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/;request_terminate_timeout.*/request_terminate_timeout = 300/" /etc/php/fpm/pool.d/www.conf
+		sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/fpm/pool.d/www.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
 		
 		# Change PHP Fastcgi Socket
-		sed -i "s'listen = /var/run/php5-fpm.sock'listen = 127.0.0.1:9000'" /etc/php5/fpm/pool.d/www.conf || OwnError "Unable To Change PHP Fastcgi Socket"
+		sed -i "s'listen = /var/run/php-fpm.sock'listen = 127.0.0.1:9000'" /etc/php/fpm/pool.d/www.conf || OwnError "Unable To Change PHP Fastcgi Socket"
 
 		# Separate PHP POOL For Slow Logs
-		cp /etc/php5/fpm/pool.d/www.conf /etc/php5/fpm/pool.d/debug.conf
-		sed -i "s'\[www\]'[debug]'" /etc/php5/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Pool Name"
-		sed -i "s'listen = 127.0.0.1:9000'listen = 127.0.0.1:9001'" /etc/php5/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Fastcgi Listen Port"
-		#sed -i "s/pm = dynamic/pm = ondemand/" /etc/php5/fpm/pool.d/debug.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
-		sed -i "s';slowlog.*'slowlog = /var/log/php5/slow.log'"  /etc/php5/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Slowlog"
-		sed -i "s';request_slowlog_timeout.*'request_slowlog_timeout = 10s'"  /etc/php5/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Request Slowlog Timeout"
-		echo -e "php_admin_value[xdebug.profiler_output_dir] = /tmp/ \nphp_admin_value[xdebug.profiler_output_name] = cachegrind.out.%p-%H-%R \nphp_admin_flag[xdebug.profiler_enable_trigger] = on \nphp_admin_flag[xdebug.profiler_enable] = off" | tee -ai  /etc/php5/fpm/pool.d/debug.conf &>> $INSTALLLOG \
+		cp /etc/php/fpm/pool.d/www.conf /etc/php/fpm/pool.d/debug.conf
+		sed -i "s'\[www\]'[debug]'" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Pool Name"
+		sed -i "s'listen = 127.0.0.1:9000'listen = 127.0.0.1:9001'" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Fastcgi Listen Port"
+		#sed -i "s/pm = dynamic/pm = ondemand/" /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
+		sed -i "s';slowlog.*'slowlog = /var/log/php/slow.log'"  /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Slowlog"
+		sed -i "s';request_slowlog_timeout.*'request_slowlog_timeout = 10s'"  /etc/php/fpm/pool.d/debug.conf || OwnError "Unable To Change PHP Request Slowlog Timeout"
+		echo -e "php_admin_value[xdebug.profiler_output_dir] = /tmp/ \nphp_admin_value[xdebug.profiler_output_name] = cachegrind.out.%p-%H-%R \nphp_admin_flag[xdebug.profiler_enable_trigger] = on \nphp_admin_flag[xdebug.profiler_enable] = off" | tee -ai  /etc/php/fpm/pool.d/debug.conf &>> $INSTALLLOG \
 		|| OwnError "Unable To Add Xdebug Settings"
 	fi
 }
@@ -375,7 +375,7 @@ PHP_PACKAGES()
 	# Create info.php File To Display The phpinfo Information
 	echo -e "<?php \n\t phpinfo(); \n?>" &>> /var/www/22222/htdocs/php/info.php
 
-	# Fake PHP5-FPM Status Pages
+	# Fake php-FPM Status Pages
 	if [ ! -d /var/www/22222/htdocs/fpm/status/ ]
 	then
 			mkdir -p /var/www/22222/htdocs/fpm/status/ || OwnError "Unable To Create FPM Status Directory"
@@ -540,12 +540,12 @@ INSTALLALL()
 	MYSQLINSTALLTWEAKS
 	POSTFIXINSTALLTWEAKS
 
-	# Install Nginx PHP5 MySQL Postfix
-	echo -e "\033[36mInstalling Nginx PHP5 MySQL Postfix, Please Wait...\e[0m"
+	# Install Nginx php MySQL Postfix
+	echo -e "\033[36mInstalling Nginx php MySQL Postfix, Please Wait...\e[0m"
 	$EEAPTGET install $NGINXPACKAGE php-common php-mysqlnd php-xmlrpc \
 	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
 	php-memcache memcached mysql-server mysqltuner percona-toolkit postfix \
-	|| OwnError "Unable To Install Nginx PHP5 MySQL Postfix"
+	|| OwnError "Unable To Install Nginx php MySQL Postfix"
 }
 
 
@@ -562,11 +562,11 @@ REMOVENGINX()
 
 REMOVEPHP()
 {
-	# Remove PHP5
-	echo -e "\033[36mRemoving PHP5, Please Wait...\e[0m"
+	# Remove php
+	echo -e "\033[36mRemoving php, Please Wait...\e[0m"
 	$EEAPTGET remove php-common php-mysqlnd php-xmlrpc \
 	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
-	php-memcache memcached mysql-server || OwnError "Unable To Remove PHP5"
+	php-memcache memcached mysql-server || OwnError "Unable To Remove php"
 }
 
 REMOVEWPCLI()
@@ -603,12 +603,12 @@ REMOVEALL()
 	# Select Nginx Package
 	NGINXINSTALLTWEAKS
 
-	# Remove Nginx PHP5 MySQL Postfix
-	echo -e "\033[36mRemoving Nginx PHP5 MySQL Postfix, Please Wait...\e[0m"
+	# Remove Nginx php MySQL Postfix
+	echo -e "\033[36mRemoving Nginx php MySQL Postfix, Please Wait...\e[0m"
 	$EEAPTGET remove $NGINXPACKAGE php-common php-mysqlnd php-xmlrpc \
 	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
 	php-memcache memcached mysql-server mysqltuner percona-toolkit postfix \
-	|| OwnError "Unable To Remove Nginx PHP5 MySQL Postfix"
+	|| OwnError "Unable To Remove Nginx php MySQL Postfix"
 }
 
 AUTOREMOVE()
@@ -632,11 +632,11 @@ PURGENGINX()
 
 PURGEPHP()
 {
-	# Purge PHP5
-	echo -e "\033[36mPurge PHP5, Please Wait...\e[0m"
-	$EEAPTGET purge php5-common php5-mysqlnd php5-xmlrpc \
-	php5-curl php5-gd php5-cli php5-fpm php5-imap php5-mcrypt php5-xdebug \
-	php5-memcache memcached || OwnError "Unable To Purge PHP5"
+	# Purge php
+	echo -e "\033[36mPurge php, Please Wait...\e[0m"
+	$EEAPTGET purge php-common php-mysqlnd php-xmlrpc \
+	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
+	php-memcache memcached || OwnError "Unable To Purge php"
 }
 
 PURGEMYSQL()
@@ -656,12 +656,12 @@ PURGEPOSTFIX()
 
 PURGEALL()
 {
-	# Purge Nginx PHP5 MySQL Postfix
-	echo -e "\033[36mRemoving Nginx PHP5 MySQL Postfix, Please Wait...\e[0m"
-	$EEAPTGET purge $NGINXPACKAGE nginx-common php5-common php5-mysqlnd php5-xmlrpc \
-	php5-curl php5-gd php5-cli php5-fpm php5-imap php5-mcrypt php5-xdebug \
-	php5-memcache memcached mysql-server mysqltuner percona-toolkit postfix \
-	|| OwnError "Unable To Purge Nginx PHP5 MySQL Postfix"
+	# Purge Nginx php MySQL Postfix
+	echo -e "\033[36mRemoving Nginx php MySQL Postfix, Please Wait...\e[0m"
+	$EEAPTGET purge $NGINXPACKAGE nginx-common php-common php-mysqlnd php-xmlrpc \
+	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
+	php-memcache memcached mysql-server mysqltuner percona-toolkit postfix \
+	|| OwnError "Unable To Purge Nginx php MySQL Postfix"
 }
 
 # EasyEngine Status Function
@@ -687,7 +687,7 @@ EE_SYSTEM_STATUS()
 	ROOT_PARTITION_USAGE=$(df -h | grep /$ | awk '{print $5}')
 
 	NGINX_STATUS=$(service nginx status | grep 'nginx is running' &>> $INSTALLLOG && echo -e "\033[36mRunning\e[0m" || echo -e "\033[31mStopped\e[0m")
-	PHP_STATUS=$(service php5-fpm status | grep running &>> $INSTALLLOG && echo -e "\033[36mRunning\e[0m" || echo -e "\033[31mStopped\e[0m")
+	PHP_STATUS=$(service php-fpm status | grep running &>> $INSTALLLOG && echo -e "\033[36mRunning\e[0m" || echo -e "\033[31mStopped\e[0m")
 	MYSQL_STATUS=$(service mysql status | grep running &>> $INSTALLLOG && echo -e "\033[36mRunning\e[0m" || echo -e "\033[31mStopped\e[0m")
 	POSTFIX_STATUS=$(service postfix status | grep 'postfix is running' &>> $INSTALLLOG && echo -e "\033[36mRunning\e[0m" || echo -e "\033[31mStopped\e[0m")
 
@@ -702,7 +702,7 @@ EE_SYSTEM_STATUS()
 	echo -e "\033[37m  Service status information\e[0m"
 	echo
 	echo -e "  Nginx:\t$NGINX_STATUS"
-	echo -e "  PHP5-FPM:\t$PHP_STATUS"
+	echo -e "  php-FPM:\t$PHP_STATUS"
 	echo -e "  MySQL:\t$MYSQL_STATUS"
 	echo -e "  Postfix:\t$POSTFIX_STATUS"
 	echo
@@ -923,7 +923,7 @@ EECREATEDATABASE()
 PHPUSERINFO()
 {
 	# PHP User
-	PHPUSER=$(grep ^user /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2 | cut -d' ' -f2) \
+	PHPUSER=$(grep ^user /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2 | cut -d' ' -f2) \
 	|| OwnError "Unable To Find Out PHP Username"
 }
 
@@ -952,23 +952,23 @@ EEINFO()
 	# Collect Information From php.ini
 	PHPUSERINFO
 	PHPVER=$(php -v | head -n1 | cut -d' ' -f2 | cut -d'+' -f1)
-	PHPMEM=$(grep ^memory_limit /etc/php5/fpm/php.ini | awk '{print $3}')
-	PHPEXPOSE=$(grep ^expose_php /etc/php5/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPPOSTMAXSIZE=$(grep post_max_size /etc/php5/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPUPLOADMAXFSIZE=$(grep upload_max_filesize /etc/php5/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPMAXEXECUTIONTIME=$(grep max_execution_time /etc/php5/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPMEM=$(grep ^memory_limit /etc/php/fpm/php.ini | awk '{print $3}')
+	PHPEXPOSE=$(grep ^expose_php /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPPOSTMAXSIZE=$(grep post_max_size /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPUPLOADMAXFSIZE=$(grep upload_max_filesize /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPMAXEXECUTIONTIME=$(grep max_execution_time /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
 
 	# Collect Information From www.conf
-	PHPPINGPATH=$(grep ^ping.path /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPSTATUSPATH=$(grep ^pm.status_path /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPFPMPROCESS=$(grep "^pm =" /etc/php5/fpm/pool.d/www.conf | awk '{print $3}')
-	PMMAXREQUEST=$(grep ^pm.max_requests /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMAXCHILDREN=$(grep ^pm.max_children /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMSTARTSERVERS=$(grep ^pm.start_servers /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMINSPARESERVERS=$(grep ^pm.min_spare_servers /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PMMAXSPARESERVERS=$(grep ^pm.max_spare_servers /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPREQUESTTERMINATE=$(grep ^request_terminate_timeout /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
-	PHPFASTCGIREQUEST=$(grep ^listen /etc/php5/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPPINGPATH=$(grep ^ping.path /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPSTATUSPATH=$(grep ^pm.status_path /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPFPMPROCESS=$(grep "^pm =" /etc/php/fpm/pool.d/www.conf | awk '{print $3}')
+	PMMAXREQUEST=$(grep ^pm.max_requests /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMAXCHILDREN=$(grep ^pm.max_children /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMSTARTSERVERS=$(grep ^pm.start_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMINSPARESERVERS=$(grep ^pm.min_spare_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PMMAXSPARESERVERS=$(grep ^pm.max_spare_servers /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPREQUESTTERMINATE=$(grep ^request_terminate_timeout /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
+	PHPFASTCGIREQUEST=$(grep ^listen /etc/php/fpm/pool.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
 
 	echo -e "\033[36m\n\nPHP ($PHPVER) Information:\n\e[0m"
 	echo -e "\033[36mPHP User:\t\t\t \033[37m$PHPUSER\e[0m"
@@ -1086,23 +1086,23 @@ NGINXRESTART()
 
 PHPSTART()
 {
-	# Start PHP5-FPM Service
-	echo -e "\033[36mStarting PHP5-FPM Service, Please Wait...\e[0m"
-	(php5-fpm -t && service php5-fpm start) &>> $INSTALLLOG || OwnError "Unable To Start PHP5-FPM"
+	# Start php-FPM Service
+	echo -e "\033[36mStarting php-FPM Service, Please Wait...\e[0m"
+	(php-fpm -t && service php-fpm start) &>> $INSTALLLOG || OwnError "Unable To Start php-FPM"
 }
 
 PHPRELOAD()
 {
-	# Reload PHP5-FPM Service
-	echo -e "\033[36mReloading PHP5-FPM Service, Please Wait...\e[0m"
-	(php5-fpm -t && service php5-fpm reload) &>> $INSTALLLOG || OwnError "Unable To Reloading PHP5-FPM"
+	# Reload php-FPM Service
+	echo -e "\033[36mReloading php-FPM Service, Please Wait...\e[0m"
+	(php-fpm -t && service php-fpm reload) &>> $INSTALLLOG || OwnError "Unable To Reloading php-FPM"
 }
 
 PHPRESTART()
 {
-	# Restart PHP5-FPM Service
-	echo -e "\033[36mRestarting PHP5-FPM Service, Please Wait...\e[0m"
-	(php5-fpm -t && service php5-fpm restart) &>> $INSTALLLOG || OwnError "Unable To Restart PHP5-FPM"
+	# Restart php-FPM Service
+	echo -e "\033[36mRestarting php-FPM Service, Please Wait...\e[0m"
+	(php-fpm -t && service php-fpm restart) &>> $INSTALLLOG || OwnError "Unable To Restart php-FPM"
 }
 
 MYSQLSTART()
@@ -1627,25 +1627,25 @@ DEBUG_PHP()
 		grep -B2 9001 /etc/nginx/conf.d/upstream.conf | grep php &>> $INSTALLLOG
 		if [ $? -ne 0 ]
 		then
-			echo -e "\033[36mEnable PHP5-FPM Slow Log, Please Wait...\e[0m"
+			echo -e "\033[36mEnable php-FPM Slow Log, Please Wait...\e[0m"
 			sed -i "4 s/9000/9001/" /etc/nginx/conf.d/upstream.conf
 
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
 		else
-			echo -e "\033[36mPHP5-FPM Slow Log Already Enabled\e[0m"
+			echo -e "\033[36mphp-FPM Slow Log Already Enabled\e[0m"
 		fi
 	else
 		grep 9001 /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
 		if [ $? -ne 0 ]
 		then
-			echo -e "\033[36mEnable PHP5-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
+			echo -e "\033[36mEnable php-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
 			sed -i "s/fastcgi_pass.*/fastcgi_pass debug;/g" /etc/nginx/sites-available/$DOMAIN
 
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
 		else
-			echo -e "\033[36mPHP5-FPM Slow Log Already Enabled For $DOMAIN\e[0m"
+			echo -e "\033[36mphp-FPM Slow Log Already Enabled For $DOMAIN\e[0m"
 		fi
 	fi
 }
@@ -1660,54 +1660,54 @@ DEBUG_PHP_STOP()
 		grep -B2 9001 /etc/nginx/conf.d/upstream.conf | grep php &>> $INSTALLLOG
 		if [ $? -eq 0 ]
 		then
-			echo -e "\033[36mDisable PHP5-FPM Slow Log, Please Wait...\e[0m"
+			echo -e "\033[36mDisable php-FPM Slow Log, Please Wait...\e[0m"
 			sed -i "4 s/9001/9000/" /etc/nginx/conf.d/upstream.conf
 			
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
 		else
-			echo -e "\033[36mPHP5-FPM Slow Log Already Disabled\e[0m"
+			echo -e "\033[36mphp-FPM Slow Log Already Disabled\e[0m"
 		fi
 	else
 		grep "fastcgi_pass debug;" /etc/nginx/sites-available/$DOMAIN &>> $INSTALLLOG
 		if [ $? -eq 0 ]
 		then
-			echo -e "\033[36mDisable PHP5-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
+			echo -e "\033[36mDisable php-FPM Slow Log For $DOMAIN, Please Wait...\e[0m"
 			sed -i "s/fastcgi_pass.*/fastcgi_pass php;/g" /etc/nginx/sites-available/$DOMAIN
 
 			# Lets Trigger The Nginx Reload
 			EE_DEBUG_NGINX="--nginx"
 		else
-			echo -e "\033[36mPHP5-FPM Slow Log Already Disabled For $DOMAIN\e[0m"
+			echo -e "\033[36mphp-FPM Slow Log Already Disabled For $DOMAIN\e[0m"
 		fi
 	fi
 }
 
 DEBUG_PHP_FPM()
 {
-	grep "log_level = debug" /etc/php5/fpm/php-fpm.conf &>> $INSTALLLOG
+	grep "log_level = debug" /etc/php/fpm/php-fpm.conf &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
-		# Enable PHP5-FPM Error Logs In Debug Mode
-		echo -e "\033[36mSetting Up PHP5-FPM Log Level In Debug Mode, Please Wait...\e[0m"
-		sed -i "s';log_level.*'log_level = debug'" /etc/php5/fpm/php-fpm.conf
+		# Enable php-FPM Error Logs In Debug Mode
+		echo -e "\033[36mSetting Up php-FPM Log Level In Debug Mode, Please Wait...\e[0m"
+		sed -i "s';log_level.*'log_level = debug'" /etc/php/fpm/php-fpm.conf
 	else
 		EE_DEBUG_FPM=""
-		echo -e "\033[36mPHP5-FPM Log Level Is Already In Debug Mode\e[0m"
+		echo -e "\033[36mphp-FPM Log Level Is Already In Debug Mode\e[0m"
 	fi
 }
 
 DEBUG_PHP_FPM_STOP()
 {
-	grep "log_level = notice" /etc/php5/fpm/php-fpm.conf &>> $INSTALLLOG
+	grep "log_level = notice" /etc/php/fpm/php-fpm.conf &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
-		# Disable PHP5-FPM Error Logs In Debug Mode
-		echo -e "\033[36mStopping PHP5-FPM Log Level In Debug Mode, Please Wait...\e[0m"
-		sed -i "s/log_level = debug/log_level = notice/" /etc/php5/fpm/php-fpm.conf
+		# Disable php-FPM Error Logs In Debug Mode
+		echo -e "\033[36mStopping php-FPM Log Level In Debug Mode, Please Wait...\e[0m"
+		sed -i "s/log_level = debug/log_level = notice/" /etc/php/fpm/php-fpm.conf
 	else
 		EE_DEBUG_FPM=""
-		echo -e "\033[36mPHP5-FPM Log Level Already In Notice (Default) Mode\e[0m"
+		echo -e "\033[36mphp-FPM Log Level Already In Notice (Default) Mode\e[0m"
 	fi
 }
 
@@ -1844,9 +1844,9 @@ DEBUG_INTERACTIVE()
 {
 	if [ -z "$EE_DEBUG_SITENAME" ]
 	then
-		tail -f /var/log/nginx/*.error.log /var/log/php5/*.log /var/log/mysql/*.log
+		tail -f /var/log/nginx/*.error.log /var/log/php/*.log /var/log/mysql/*.log
 	else
-		tail -f /var/log/nginx/*.error.log /var/log/php5/*.log /var/log/mysql/*.log /var/www/$DOMAIN/htdocs/wp-content/debug.log
+		tail -f /var/log/nginx/*.error.log /var/log/php/*.log /var/log/mysql/*.log /var/www/$DOMAIN/htdocs/wp-content/debug.log
 	fi
 }
 
@@ -1913,7 +1913,7 @@ then
 			# Update The APT Cache
 			UPDATEAPT
 
-			# Install PHP5
+			# Install php
 			INSTALLPHP
 
 			# Personal Settings For PHP
@@ -1927,11 +1927,11 @@ then
 			PHP_PACKAGES
 
 			# Initialise Git
-			EEGITDIR=/etc/php5/
+			EEGITDIR=/etc/php/
 			EEGITINIT
 
 			# Display Success Message
-			echo -e "\033[36mPHP5 & WP-CLI Successfully Installed\e[0m"
+			echo -e "\033[36mphp & WP-CLI Successfully Installed\e[0m"
 
 		elif [ "$3" = "phpmyadmin" ] || [ "$3" = "pma" ]
 		then
@@ -2011,7 +2011,7 @@ then
 			# Update The APT Cache
 			UPDATEAPT
 
-			# Install Nginx PHP5 MySQL Postfix
+			# Install Nginx php MySQL Postfix
 			INSTALLALL
 
 			# Personal Settings For Nginx
@@ -2044,7 +2044,7 @@ then
 			EEGITINIT
 
 			# Initialize Git
-			EEGITDIR=/etc/php5/
+			EEGITDIR=/etc/php/
 			EEGITINIT
 
 			# Initialize Git
@@ -2060,7 +2060,7 @@ then
 			EEGITINIT
 
 			# Display Success Message
-			echo -e "\033[36mNginx PHP5 WP-CLI MySQL Postfix phpMyAdmin Successfully Installed\e[0m"
+			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Installed\e[0m"
 			echo -e "\033[36mYou Can Now Create Your First WordPress Site Powered By Nginx Using:\e[0m"
 			echo -e "\033[37mee site create example.com --wp\e[0m"
 
@@ -2088,7 +2088,7 @@ then
 		elif [ "$3" = "php" ]
 		then
 
-			# Remove PHP5
+			# Remove php
 			REMOVEPHP
 			REMOVEWPCLI
 			
@@ -2096,7 +2096,7 @@ then
 			AUTOREMOVE
 						
 			# Display Success Message
-			echo -e "\033[36mPHP5 & WP-CLI Successfully Removed\e[0m"
+			echo -e "\033[36mphp & WP-CLI Successfully Removed\e[0m"
 
 		elif [ "$3" = "phpmyadmin" ]  || [ "$3" = "pma" ]
 		then
@@ -2134,7 +2134,7 @@ then
 		elif [ "$3" = "all" ] || [ "$3" = "" ]
 		then
 
-			# Remove Nginx PHP5 MySQL Postfix
+			# Remove Nginx php MySQL Postfix
 			REMOVEALL
 			
 			# Remove Unwanted Packages
@@ -2143,7 +2143,7 @@ then
 			REMOVEPMA
 
 			# Display Success Message
-			echo -e "\033[36mNginx PHP5 WP-CLI MySQL Postfix phpMyAdmin Successfully Removed\e[0m"
+			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Removed\e[0m"
 
 		fi
 
@@ -2169,7 +2169,7 @@ then
 		elif [ "$3" = "php" ]
 		then
 
-			# Purge PHP5
+			# Purge php
 			PURGEPHP
 			REMOVEWPCLI
 			
@@ -2177,7 +2177,7 @@ then
 			AUTOREMOVE
 
 			# Display Success Message
-			echo -e "\033[36mPHP5 & WP-CLI Successfully Purged\e[0m"
+			echo -e "\033[36mphp & WP-CLI Successfully Purged\e[0m"
 
 		elif [ "$3" = "phpmyadmin" ]  || [ "$3" = "pma" ]
 		then
@@ -2215,7 +2215,7 @@ then
 		elif [ "$3" = "all" ] || [ "$3" = "" ]
 		then
 
-			# Purge Nginx PHP5 MySQL Postfix
+			# Purge Nginx php MySQL Postfix
 			PURGEALL
 
 			# Remove Unwanted Packages
@@ -2224,7 +2224,7 @@ then
 			REMOVEPMA
 
 			# Display Success Message
-			echo -e "\033[36mNginx PHP5 WP-CLI MySQL Postfix phpMyAdmin Successfully Purged\e[0m"
+			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Purged\e[0m"
 
 		fi
 
@@ -2235,11 +2235,11 @@ then
 
 	elif [ "$2" = "stop" ]
 	then
-		# Stop Nginx PHP5-FPM MySQL & Postfix
+		# Stop Nginx php-FPM MySQL & Postfix
 		echo -e "\033[36mStopping Nginx Service, Please Wait...\e[0m"
 		service nginx stop &>> $INSTALLLOG || OwnError "Unable To Stop Nginx"
-		echo -e "\033[36mStopping PHP5-FPM Service, Please Wait...\e[0m"
-		service php5-fpm stop &>> $INSTALLLOG || OwnError "Unable To Stop PHP5-FPM"
+		echo -e "\033[36mStopping php-FPM Service, Please Wait...\e[0m"
+		service php-fpm stop &>> $INSTALLLOG || OwnError "Unable To Stop php-FPM"
 		echo -e "\033[36mStopping MySQL Service, Please Wait...\e[0m"
 		service mysql stop &>> $INSTALLLOG || OwnError "Unable To Stop MySQL"
 		echo -e "\033[36mStopping Postfix Service, Please Wait...\e[0m"
@@ -2247,7 +2247,7 @@ then
 
 	elif [ "$2" = "start" ]
 	then
-		# Start Nginx PHP5-FPM MySQL & Postfix
+		# Start Nginx php-FPM MySQL & Postfix
 		NGINXSTART
 		PHPSTART
 		MYSQLSTART
@@ -2255,7 +2255,7 @@ then
 
 	elif [ "$2" = "reload" ]
 	then
-		# Restart Nginx PHP5-FPM MySQL & Postfix
+		# Restart Nginx php-FPM MySQL & Postfix
 		NGINXRELOAD
 		PHPRELOAD
 		MYSQLRELOAD
@@ -2263,7 +2263,7 @@ then
 
 	elif [ "$2" = "restart" ]
 	then
-		# Restart Nginx PHP5-FPM MySQL & Postfix
+		# Restart Nginx php-FPM MySQL & Postfix
 		NGINXRESTART
 		PHPRESTART
 		MYSQLRESTART
@@ -2272,13 +2272,13 @@ then
 	else
 		echo -e "\033[36mList Of Available Commands:\e[0m"
 		echo -e "\tstatus:\t Display The System Status Information"
-		echo -e "\tstop:\t Stop Nginx PHP5-FPM MySQL And Postfix Services"
-		echo -e "\tstart:\t Start Nginx PHP5-FPM MySQL And Postfix Services"
-		echo -e "\treload:\t Reload Nginx PHP5-FPM MySQL And Postfix Services"
-		echo -e "\trestart: Restart Nginx PHP5-FPM MySQL And Postfix Services"
-		echo -e "\tpurge:\t Purge Nginx PHP5-FPM phpMyAdmin MySQL And Postfix Packages"
-		echo -e "\tremove:\t Remove Nginx PHP5-FPM phpMyAdmin MySQL And Postfix Packages"
-		echo -e "\tinstall: Install Nginx PHP5-FPM phpMyAdmin MySQL And Postfix Packages"
+		echo -e "\tstop:\t Stop Nginx php-FPM MySQL And Postfix Services"
+		echo -e "\tstart:\t Start Nginx php-FPM MySQL And Postfix Services"
+		echo -e "\treload:\t Reload Nginx php-FPM MySQL And Postfix Services"
+		echo -e "\trestart: Restart Nginx php-FPM MySQL And Postfix Services"
+		echo -e "\tpurge:\t Purge Nginx php-FPM phpMyAdmin MySQL And Postfix Packages"
+		echo -e "\tremove:\t Remove Nginx php-FPM phpMyAdmin MySQL And Postfix Packages"
+		echo -e "\tinstall: Install Nginx php-FPM phpMyAdmin MySQL And Postfix Packages"
 
 	fi
 
@@ -3035,7 +3035,7 @@ then
 			DEBUG_PHP
 
 			# Log Message
-			LOGMESSAGE="$LOGMESSAGE /var/log/php5/slow.log"
+			LOGMESSAGE="$LOGMESSAGE /var/log/php/slow.log"
 		fi
 
 		if [ "$EE_DEBUG_FPM" = "--fpm" ]
@@ -3044,7 +3044,7 @@ then
 			DEBUG_PHP_FPM
 
 			# Log Message
-			LOGMESSAGE="$LOGMESSAGE /var/log/php5/fpm.log"
+			LOGMESSAGE="$LOGMESSAGE /var/log/php/fpm.log"
 		fi
 
 		if [ "$EE_DEBUG_MYSQL" = "--mysql" ]
@@ -3139,7 +3139,7 @@ then
 
 	if [ "$EE_DEBUG_PHP" = "--php" ] || [ "$EE_DEBUG_FPM" = "--fpm" ]
 	then
-		# Restart PHP5-FPM
+		# Restart php-FPM
 		PHPRESTART
 	fi
 
