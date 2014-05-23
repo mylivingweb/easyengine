@@ -235,7 +235,7 @@ PHP_PACKAGES()
 		sed -i "s'/usr/local/bin/dot'/usr/bin/dot'" /var/www/22222/htdocs/php/webgrind/config.php
 
 		# Install Graphviz
-		dpkg -l | grep graphviz &>> $INSTALLLOG
+		rpm -qa | grep graphviz &>> $INSTALLLOG
 		if [ $? -ne 0 ]
 		then
 			echo -e "\033[34mInstalling Graphviz, Please Wait...\e[0m"
@@ -409,7 +409,7 @@ EE122()
 	|| OwnError "Unable To Generate SSL Certificate"
 
 	# PHP Setup
-	dpkg -l | grep php5-fpm &>> $INSTALLLOG
+	rpm -qa | grep php-fpm &>> $INSTALLLOG
 	if [ $? -eq 0 ]
 	then
 		# Install Packages

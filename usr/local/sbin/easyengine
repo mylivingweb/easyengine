@@ -364,7 +364,7 @@ PHP_PACKAGES()
 		sed -i "s'/usr/local/bin/dot'/usr/bin/dot'" /var/www/22222/htdocs/php/webgrind/config.php
 
 		# Install Graphviz
-		dpkg -l | grep graphviz &>> $INSTALLLOG
+		rpm -qa grep graphviz &>> $INSTALLLOG
 		if [ $? -ne 0 ]
 		then
 			echo -e "\033[36mInstalling Graphviz, Please Wait...\e[0m"
