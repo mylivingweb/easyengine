@@ -12,7 +12,7 @@ LOGDIR=/var/log/easyengine
 INSTALLLOG=/var/log/easyengine/install.log
 LINUX_DISTRO=$(lsb_release -i |awk '{print $3}')
 
-# Checking Linux Distro Is Ubuntu
+# Checking Linux Distro Is CentOS
 if [ "$LINUX_DISTRO" != "CentOS" ]
 then
 	echo -e "\033[31mEasyEngine Centos (ee) Is Made For Centos Only As Of Now\e[0m"
