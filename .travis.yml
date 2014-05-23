@@ -4,12 +4,12 @@ before_install:
 
 
 before_script:
-- sudo apt-get purge mysql*
+#- sudo apt-get purge mysql*
 
 
 script:
 # Specify Git Username/Password So Installation Script Don't Prompt For Input
-- sudo echo -e "[user]\n\tname = Mitesh Shah\n\temail = root@localhost" > ~/.gitconfig
+- sudo echo -e "[user]\n\tname = Matt Livingston\n\temail = mylivingweb@gmail.com" > ~/.gitconfig
 - sudo bash install.sh
 
 - sudo sed -i "s/htpasswduser.*/htpasswduser = easyengine/" /etc/easyengine/ee.conf
