@@ -1,16 +1,10 @@
 #!/bin/bash
 
-
-
-# Update The APT Cache
-echo -e "\033[34mUpdating APT Cache, Please Wait...\e[0m"
-apt-get update &>> /dev/null
-
 # Checking lsb_release
 if [ ! -x  /usr/bin/lsb_release ]; then
 	echo -e "\033[31mThe lsb_release Command Not Found\e[0m"
-	echo -e "\033[34mInstalling lsb-release, Please Wait...\e[0m"
-	apt-get -y install lsb-release &>> /dev/null
+	echo -e "\033[36mInstalling lsb-release, Please Wait...\e[0m"
+	yum -y install redhat-lsb-corel &>> /dev/null
 fi
 
 # Make Variables Available For Later Use
@@ -19,10 +13,10 @@ INSTALLLOG=/var/log/easyengine/install.log
 LINUX_DISTRO=$(lsb_release -i |awk '{print $3}')
 
 # Checking Linux Distro Is Ubuntu
-if [ "$LINUX_DISTRO" != "Ubuntu" ] && [ "$LINUX_DISTRO" != "Debian" ]
+if [ "$LINUX_DISTRO" != "CentOS" ] && [ "$LINUX_DISTRO" != "RedHatEnterpriseServer" ]
 then
-	echo -e "\033[31mEasyEngine (ee) Is Made For Ubuntu And Debian Only As Of Now\e[0m"
-	echo -e "\033[31mYou Are Free To Fork EasyEngine (ee): https://github.com/rtCamp/easyengine/fork\e[0m"
+	echo -e "\033[31mEasyEngine RHEL (ee) Is Made For Centos And Redhat Only As Of Now\e[0m"
+	echo -e "\033[31mIf you are using ubuntu or debian, check out main branch here https://github.com/rtCamp/easyengine\e[0m"
 	exit 100
 fi
 
@@ -30,7 +24,7 @@ fi
 if [[ $EUID -ne 0 ]]
 then
 	echo -e "\033[31mSudo Privilege Required...\e[0m"
-	echo -e "\033[31mUses:\e[0m\033[34m curl -sL rt.cx/ee | sudo bash\e[0m"
+	echo -e "\033[31mUses:\e[0m\033[36m curl -sL rt.cx/ee | sudo bash\e[0m"
 	exit 100 
 fi
 
@@ -47,7 +41,7 @@ OwnError()
 # Checking Logs Directory
 if [ ! -d $LOGDIR ]
 then
-	echo -e "\033[34mCreating EasyEngine (ee) Log Directory, Please Wait...\e[0m"
+	echo -e "\033[36mCreating EasyEngine (ee) Log Directory, Please Wait...\e[0m"
 	mkdir -p $LOGDIR || OwnError "Unable To Create Log Directory $LOGDIR"
 fi
 
@@ -55,61 +49,61 @@ fi
 if [ ! -x  /usr/bin/tee ]
 then
 	echo -e "\033[31mTee Command Not Found\e[0m"
-	echo -e "\033[34mInstalling Tee, Please Wait...\e[0m"
-	apt-get -y install coreutils &>> $INSTALLLOG || OwnError "Unable to install tee"
+	echo -e "\033[36mInstalling Tee, Please Wait...\e[0m"
+	yum -y install coreutils &>> $INSTALLLOG || OwnError "Unable to install tee"
 fi
 
 echo &>> $INSTALLLOG
 echo &>> $INSTALLLOG
-echo -e "\033[34mEasyEngine (ee) Installation Started [$(date)]\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mEasyEngine (ee) Installation Started [$(date)]\e[0m" | tee -ai $INSTALLLOG
 
 
 # Checking Ed
 if [ ! -x  /bin/ed ]
 then
 	echo -e "\033[31mEd Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Ed, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install ed &>> $INSTALLLOG || OwnError "Unable to install ed"
+	echo -e "\033[36mInstalling Ed, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install ed &>> $INSTALLLOG || OwnError "Unable to install ed"
 fi
 
 # Checking Bc
 if [ ! -x  /usr/bin/bc ]
 then
 	echo -e "\033[31mBc Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Bc, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install bc &>> $INSTALLLOG || OwnError "Unable to install bc"
+	echo -e "\033[36mInstalling Bc, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install bc &>> $INSTALLLOG || OwnError "Unable to install bc"
 fi
 
 # Checking Wget
 if [ ! -x  /usr/bin/wget ]
 then
 	echo -e "\033[31mWget Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Wget, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install wget &>> $INSTALLLOG || OwnError "Unable To Install Wget"
+	echo -e "\033[36mInstalling Wget, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install wget &>> $INSTALLLOG || OwnError "Unable To Install Wget"
 fi
 
 # Checking Curl
 if [ ! -x  /usr/bin/curl ]
 then
 	echo -e "\033[31mCurl Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Curl, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install curl &>> $INSTALLLOG || OwnError "Unable To Install Curl"
+	echo -e "\033[36mInstalling Curl, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install curl &>> $INSTALLLOG || OwnError "Unable To Install Curl"
 fi
 
 # Checking Tar
 if [ ! -x  /bin/tar ]
 then
 	echo -e "\033[31mTar Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Tar, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install tar &>> $INSTALLLOG || OwnError "Unable To Install Tar"
+	echo -e "\033[36mInstalling Tar, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install tar &>> $INSTALLLOG || OwnError "Unable To Install Tar"
 fi
 
 # Checking Git
 if [ ! -x  /usr/bin/git ]
 then
 	echo -e "\033[31mGit Command Not Found\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mInstalling Git, Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	apt-get -y install git-core &>> $INSTALLLOG || OwnError "Unable To Install Git"
+	echo -e "\033[36mInstalling Git, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+	yum -y install git &>> $INSTALLLOG || OwnError "Unable To Install Git"
 fi
 
 # Checking Name Servers
@@ -137,7 +131,7 @@ else
 	fi
 fi
 
-echo -e "\033[34mCloning EasyEngine (ee) $EE_BRANCH Branch, Please Wait...\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mCloning EasyEngine (ee) $EE_BRANCH Branch, Please Wait...\e[0m" | tee -ai $INSTALLLOG
 	
 # Remove Older EasyEngine (ee) If Found
 rm -rf /tmp/easyengine &>> /dev/null
@@ -161,7 +155,7 @@ then
 fi
 
 # Install EasyEngine (ee)
-echo -e "\033[34mInstalling EasyEngine (ee), Please Wait...\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mInstalling EasyEngine (ee), Please Wait...\e[0m" | tee -ai $INSTALLLOG
 
 # EasyEngine (ee) /etc Files
 cp -a /tmp/easyengine/etc/bash_completion.d/ee /etc/bash_completion.d/ &>> $INSTALLLOG || OwnError "Unable To Copy EE Auto Complete File"
@@ -194,9 +188,9 @@ EEGITEMAIL=$(git config user.email)
 if [ -z "$EEGITNAME" ] || [ -z "$EEGITEMAIL" ]
 then
 	echo
-	echo -e "\033[34mEasyEngine (ee) Required Your Name & Email Address To Track Changes You Made Under The Git\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mEasyEngine (ee) Will Be Able To Send You Daily Reports & Alerts In Upcoming Version\e[0m" | tee -ai $INSTALLLOG
-	echo -e "\033[34mEasyEngine (ee) Will NEVER Send Your Information Across\e[0m" | tee -ai $INSTALLLOG
+	echo -e "\033[36mEasyEngine (ee) Required Your Name & Email Address To Track Changes You Made Under The Git\e[0m" | tee -ai $INSTALLLOG
+	echo -e "\033[36mEasyEngine (ee) Will Be Able To Send You Daily Reports & Alerts In Upcoming Version\e[0m" | tee -ai $INSTALLLOG
+	echo -e "\033[36mEasyEngine (ee) Will NEVER Send Your Information Across\e[0m" | tee -ai $INSTALLLOG
 fi
 # Check Git User Is Empty Or Not
 if [ -z "$EEGITNAME" ]
@@ -225,11 +219,11 @@ fi
 
 # Source EasyEngine (ee) Auto Complete To Take Effect
 echo
-echo -e "\033[34mFor EasyEngine (ee) Auto Completion Run Following Command\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mFor EasyEngine (ee) Auto Completion Run Following Command\e[0m" | tee -ai $INSTALLLOG
 echo -e "\033[37msource /etc/bash_completion.d/ee\e[0m" | tee -ai $INSTALLLOG
 echo
 
 # Display Success Message
-echo -e "\033[34mEasyEngine (ee) Installed Successfully\e[0m" | tee -ai $INSTALLLOG
-echo -e "\033[34mEasyEngine (ee) Help: http://rtcamp.com/easyengine/docs/\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mEasyEngine (ee) Installed Successfully\e[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mEasyEngine (ee) Help: http://rtcamp.com/easyengine/docs/\e[0m" | tee -ai $INSTALLLOG
 echo
