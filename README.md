@@ -10,6 +10,7 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 
 **This script will partially work for now**
 - script adds REPL, NGINX, and REMI repos
+
 **things left to do**
 - fix default nginx config for new sites
 - start php-fpm, mysql, nginx
