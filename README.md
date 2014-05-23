@@ -10,7 +10,7 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 
 **This script will partially work for now**
 - script adds REPL, NGINX, and REMI repos
-*things left to do*
+**things left to do**
 - fix default nginx config for new sites
 - start php-fpm, mysql, nginx
 - add chkconfig for above
@@ -27,7 +27,7 @@ ee site create example.com --wp       # create example.com and install wordpress
 ```
 **nginx will fail to reload due to unknown log format**
 
-## Upgrading which has not been test at all for CentOS
+## Upgrading which has not been tested at all for CentOS and will most likely fail
 
 ### From easyengine 1.0 to 1.1 and above
 
