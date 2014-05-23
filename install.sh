@@ -4,7 +4,7 @@
 if [ ! -x  /usr/bin/lsb_release ]; then
 	echo -e "\033[31mThe lsb_release Command Not Found\e[0m"
 	echo -e "\033[36mInstalling lsb-release, Please Wait...\e[0m"
-	yum -y install redhat-lsb-core &> /dev/null
+	yum -y install redhat-lsb-core &>> /dev/null
 fi
 
 # Make Variables Available For Later Use
@@ -119,7 +119,7 @@ fi
 # Clone EasyEngine (ee)
 if [ -z "$EE_BRANCH" ]
 then
-	EE_BRANCH=stable
+	EE_BRANCH=master
 else
 	# Cross Check The Branch Name
 	git ls-remote --heads https://github.com/mylivingweb/easyengine | grep $EE_BRANCH &>> $INSTALLLOG
