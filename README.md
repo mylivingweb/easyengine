@@ -4,20 +4,30 @@
 
 easyengine (ee) is a linux shell-script collection, which makes it easy to manage your wordpress sites running on nginx web-server.
 
-**EasyEngine currently supports:**
+**EasyEngine CentOS currently supports:**
 
-- Ubuntu 12.04, 12.10, 13.10 & 14.04
-- Debian 6, 7
+- CentOS 6.5
+
+**This script will partially work for now**
+- script adds REPL, NGINX, and REMI repos
+*things left to do*
+- fix default nginx config for new sites
+- start php-fpm, mysql, nginx
+- add chkconfig for above
+- go over modules that were removed, like phpmyadmin
+- add iptables rules for 80,443 and potentially ssh 
+
 
 ## Quick Start
 
 ```bash
-curl -sL rt.cx/ee | sudo bash         # install easyengine
+curl https://raw.githubusercontent.com/mylivingweb/easyengine/master/install.sh | sudo bash         # install easyengine
 ee system install                     # install nginx, php, mysql, postfix 
 ee site create example.com --wp       # create example.com and install wordpress on it
 ```
+**nginx will fail to reload due to unknown log format**
 
-## Upgrading 
+## Upgrading which has not been test at all for CentOS
 
 ### From easyengine 1.0 to 1.1 and above
 

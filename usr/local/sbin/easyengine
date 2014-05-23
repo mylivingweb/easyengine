@@ -256,15 +256,15 @@ COMMONPHP()
 		sed -i "/extension/a \session.save_handler = memcache\nsession.save_path = \"tcp://localhost:11211\"" /etc/php/mods-available/memcache.ini
 
 		# Change PHP Settings
-		sed -i "s/\[PHP\]/[PHP]\n; Easy Engine/" /etc/php/fpm/php.ini
-		sed -i "s/expose_php.*/expose_php = Off/" /etc/php/fpm/php.ini
-		sed -i "s/post_max_size.*/post_max_size = 100M/" /etc/php/fpm/php.ini
-		sed -i "s/upload_max_filesize.*/upload_max_filesize = 100M/" /etc/php/fpm/php.ini
-		sed -i "s/max_execution_time.*/max_execution_time = 300/" /etc/php/fpm/php.ini
-		sed -i "s/;date.timezone.*/date.timezone = $TIME_ZONE/" /etc/php/fpm/php.ini
+		sed -i "s/\[PHP\]/[PHP]\n; Easy Engine/" /etc/php.ini
+		sed -i "s/expose_php.*/expose_php = Off/" /etc/php.ini
+		sed -i "s/post_max_size.*/post_max_size = 100M/" /etc/php.ini
+		sed -i "s/upload_max_filesize.*/upload_max_filesize = 100M/" /etc/php.ini
+		sed -i "s/max_execution_time.*/max_execution_time = 300/" /etc/php.ini
+		sed -i "s/;date.timezone.*/date.timezone = $TIME_ZONE/" /etc/php.ini
 
 		# Change php-FPM Error Logs Location
-		sed -i "s'error_log.*'error_log = /var/log/php/fpm.log'" /etc/php/fpm/php-fpm.conf
+		sed -i "s'error_log.*'error_log = /var/log/php/fpm.log'" /etc/php-fpm.conf
 
 		# Enable PHP Status & Ping
 		sed -i "s/;ping.path/ping.path/" /etc/php-fpm.d/www.conf
@@ -301,15 +301,17 @@ WP-CLI()
 	then
 		echo -e "\033[31mWP-CLI Command Not Found\e[0m"
 		echo -e "\033[36mInstalling WP-CLI, Please Wait...\e[0m"
-		curl -sL https://raw.github.com/wp-cli/wp-cli.github.com/master/installer.sh | INSTALL_DIR='/usr/share/easyengine/wp-cli' VERSION='0.14.1' bash &>> $INSTALLLOG \
+		curl -kL https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > wp-cli.phar &>> $INSTALLLOG \
 		|| OwnError "Unable To Install WP-CLI"
+		chmod +x wp-cli.phar
+		mv wp-cli.phar /usr/local/bin/wp
 
 		# Add WP-CLI Command In PATH Variable
-		ln -s /usr/share/easyengine/wp-cli/bin/wp /usr/bin/wp || OwnError "Unable To Create Symbolic Link For WP-CLI Command"
+		#ln -s /usr/share/easyengine/wp-cli/bin/wp /usr/bin/wp || OwnError "Unable To Create Symbolic Link For WP-CLI Command"
 
 		# Add WP-CLI Auto Completion
-		cp -i /usr/share/easyengine/wp-cli/vendor/wp-cli/wp-cli/utils/wp-completion.bash /etc/bash_completion.d/
-		source /etc/bash_completion.d/wp-completion.bash
+		#cp -i /usr/share/easyengine/wp-cli/vendor/wp-cli/wp-cli/utils/wp-completion.bash /etc/bash_completion.d/
+		#source /etc/bash_completion.d/wp-completion.bash
 	else
 		echo -e "\033[36mAlready Installed WP-CLI (/usr/share/easyengine/wp-cli)\e[0m"
 	fi
@@ -395,47 +397,6 @@ PHP_PACKAGES()
 	chown -R $PHPUSER:$PHPUSER /var/www/22222 || OwnError "Unable To Change Ownership For /var/www/22222"
 }
 
-INSTALLPMA()
-{
-	# Install PMA/phpMyAdmin
-	if [ ! -d /var/www/22222/htdocs/db/pma ] || [ ! -d /var/www/22222/htdocs/db/adminer ]
-	then
-		if [ ! -d /var/www/22222/htdocs/db/pma ]
-		then
-			echo -e "\033[36mDownloading phpMyAdmin, Please Wait...\e[0m"
-
-			# Setup PMA/phpMyAdmin
-			mkdir -p /var/www/22222/htdocs/db/pma/ || OwnError "Unable To Create phpMyAdmin Directory: /var/www/22222/htdocs/db/pma/"
-
-			# Download PMA/phpMyAdmin
-			wget --no-check-certificate -cqO /var/www/22222/htdocs/db/pma/pma.tar.gz http://dl.cihar.com/phpMyAdmin/master/phpMyAdmin-master-latest.tar.gz \
-			|| OwnError "Unable To Download phpMyAdmin"
-
-			# Extract PMA/phpMyAdmin
-			tar --strip-components=1 -zxf  /var/www/22222/htdocs/db/pma/pma.tar.gz -C /var/www/22222/htdocs/db/pma/ \
-			|| OwnError "Unable To Extract phpMyAdmin"
-
-			# Remove Unwanted Files
-			rm -f /var/www/22222/htdocs/db/pma/pma.tar.gz
-
-		fi
-	
-		if [ ! -d /var/www/22222/htdocs/db/adminer ]
-		then
-			echo -e "\033[36mDownloading Adminer, Please Wait...\e[0m"
-			# Setup Adminer
-			mkdir -p /var/www/22222/htdocs/db/adminer/ || OwnError "Unable To Create Adminer Directory: /var/www/22222/htdocs/db/adminer/"
-
-			# Download Adminer
-			wget --no-check-certificate -cqO /var/www/22222/htdocs/db/adminer/index.php http://downloads.sourceforge.net/adminer/adminer-4.0.3.php \
-			|| OwnError "Unable To Download Adminer"
-
-		fi
-
-	else
-		echo -e "\033[36mAlready Installed phpMyAdmin (/var/www/22222/htdocs/db/pma)...\e[0m"
-	fi
-}
 
 MYSQLINSTALLTWEAKS()
 {
@@ -472,7 +433,7 @@ COMMONMYSQL()
 	echo -e "\033[36mUpdating MySQL Configuration Files, Please Wait...\e[0m"
 
 	# Decrease MySQL Wait Timeout
-	sed -i "/#max_connections/a wait_timeout = 30 \ninteractive_timeout = 60" /etc/mysql/my.cnf
+	sed -i "/#max_connections/a wait_timeout = 30 \ninteractive_timeout = 60" /etc/my.cnf
 
 	# Anemometer Setup
 	if [ ! -d /var/www/22222/htdocs/db/anemometer ]
@@ -522,16 +483,8 @@ COMMONMYSQL()
 	chown -R $PHPUSER:$PHPUSER /var/www/22222/htdocs/db/anemometer/ || OwnError "Unable To Change Ownership For Anemometer"
 }
 
-POSTFIXINSTALLTWEAKS()
-{
-	
-}
-
 INSTALLPOSTFIX()
 {
-	# Setting Up Postfix
-	POSTFIXINSTALLTWEAKS
-
 	# Install Postfix
 	echo -e "\033[36mInstalling Postfix, Please Wait...\e[0m"
 	$EEAPTGET install postfix || OwnError "Unable To Install Postfix"
@@ -542,7 +495,7 @@ INSTALLALL()
 	# Setting Up Nginx MySQL & Postfix
 	NGINXINSTALLTWEAKS
 	MYSQLINSTALLTWEAKS
-	POSTFIXINSTALLTWEAKS
+	
 
 	# Install Nginx php MySQL Postfix
 	echo -e "\033[36mInstalling Nginx php MySQL Postfix, Please Wait...\e[0m"
@@ -715,42 +668,42 @@ EE_SYSTEM_STATUS()
 
 
 # EE GIT Function
-EEGITINIT()
-{
+#()
+#{
 	# Change Directory
-	cd $EEGITDIR || OwnError "Unable To Change Directory $EEGITDIR"
+#	cd $- || OwnError "Unable To Change Directory $EEGITDIR"
+#
+#	# Check .git
+#	if [ ! -d .git ]
+#	then
+#		# Initialise Git
+#		echo -e "\033[36mInitialise Git On $EEGITDIR...\e[0m"
+#		git init &>> $INSTALLLOG || OwnError "Unable To Initialize Git On $EEGITDIR"
+#	fi
+#
+#	# Check For Untracked Files
+#	if [ $(git status -s | wc -l) -ne 0 ]
+#	then
+#		# Add Files In Git Version Control
+#		git add --all && git commit -am "Initialize Git On $EEGITDIR"  &>> $INSTALLLOG \
+#		|| OwnError "Unable To Git Commit On $EEGITDIR"
+#	fi
+#}
 
-	# Check .git
-	if [ ! -d .git ]
-	then
-		# Initialise Git
-		echo -e "\033[36mInitialise Git On $EEGITDIR...\e[0m"
-		git init &>> $INSTALLLOG || OwnError "Unable To Initialize Git On $EEGITDIR"
-	fi
-
-	# Check For Untracked Files
-	if [ $(git status -s | wc -l) -ne 0 ]
-	then
-		# Add Files In Git Version Control
-		git add --all && git commit -am "Initialize Git On $EEGITDIR"  &>> $INSTALLLOG \
-		|| OwnError "Unable To Git Commit On $EEGITDIR"
-	fi
-}
-
-EEGITCOMMIT()
-{
-	cd $EEGITDIR || OwnError "Unable To Change Directory $EEGITDIR"
-
-	if [ $(git status -s | wc -l) -ne 0 ]
-	then
-		# Git Commit Functionality
-		echo -e "\033[36mTake $EEGITDIR Configuration In Git Version Control...\e[0m"
-
-		# Add Newly Created Files && Commit It
-		git add --all && git commit -am "$EEGITMESSAGE" &>> $INSTALLLOG \
-		|| OwnError "Unable To Git Commits On $EEGITDIR"
-	fi
-}
+#EEGITCOMMIT()
+#{#
+#	cd $EEGITDIR || OwnError "Unable To Change Directory $EEGITDIR"
+#
+#	if [ $(git status -s | wc -l) -ne 0 ]
+#	then
+#		# Git Commit Functionality
+#		echo -e "\033[36mTake $EEGITDIR Configuration In Git Version Control...\e[0m"
+#
+#		# Add Newly Created Files && Commit It
+#		git add --all && git commit -am "$EEGITMESSAGE" &>> $INSTALLLOG \
+#		|| OwnError "Unable To Git Commits On $EEGITDIR"
+#	fi
+#}
 
 MYSQLUSERPASS()
 {
@@ -956,11 +909,11 @@ EEINFO()
 	# Collect Information From php.ini
 	PHPUSERINFO
 	PHPVER=$(php -v | head -n1 | cut -d' ' -f2 | cut -d'+' -f1)
-	PHPMEM=$(grep ^memory_limit /etc/php/fpm/php.ini | awk '{print $3}')
-	PHPEXPOSE=$(grep ^expose_php /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPPOSTMAXSIZE=$(grep post_max_size /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPUPLOADMAXFSIZE=$(grep upload_max_filesize /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
-	PHPMAXEXECUTIONTIME=$(grep max_execution_time /etc/php/fpm/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPMEM=$(grep ^memory_limit /etc/php.ini | awk '{print $3}')
+	PHPEXPOSE=$(grep ^expose_php /etc/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPPOSTMAXSIZE=$(grep post_max_size /etc/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPUPLOADMAXFSIZE=$(grep upload_max_filesize /etc/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
+	PHPMAXEXECUTIONTIME=$(grep max_execution_time /etc/php.ini | cut -d'=' -f2 | cut -d' ' -f2)
 
 	# Collect Information From www.conf
 	PHPPINGPATH=$(grep ^ping.path /etc/php-fpm.d/www.conf | cut -d'=' -f2| cut -d' ' -f2)
@@ -995,7 +948,7 @@ EEINFO()
 
 	# MySQL Information
 	MYSQLVER=$(mysql -V | awk '{print($5)}' | cut -d ',' -f1)
-	MYSQLUSER=$(grep ^user /etc/mysql/my.cnf | awk '{print($3)}')
+	MYSQLUSER=$(grep ^user /etc/my.cnf | awk '{print($3)}')
 	MYSQLPORT=$(mysql -e "show variables" | grep ^port | awk '{print($2)}')
 	MYSQLSOCKET=$(mysql -e "show variables" | grep "^socket" | awk '{print($2)}')
 	MYSQLDATADIR=$(mysql -e "show variables" | grep datadir | awk '{print($2)}')
@@ -1026,11 +979,11 @@ EEINFO()
 EESITEINFO()
 {
 	# Display The Specific Site Configuration
-	SITESTATUS=$(ls /etc/nginx/sites-enabled/$DOMAIN &> /dev/null && echo Enable || echo Disable)
-	SITEINFO=$(head -n1 /etc/nginx/conf.d/$DOMAIN | grep "NGINX CONFIGURATION" | rev | cut -d' ' -f3,4,5,6,7 | rev | cut -d ' ' -f2,3,4,5)
-	ACCESSLOG=$(grep access_log /etc/nginx/conf.d/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
-	ERRORLOG=$(grep error_log /etc/nginx/conf.d/$DOMAIN | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
-	WEBROOT=$(grep root /etc/nginx/conf.d/$DOMAIN | grep htdocs | awk '{print($2)}'  | cut -d ';' -f1)
+	SITESTATUS=$(ls /etc/nginx/conf.d/$DOMAIN.conf &> /dev/null && echo Enable || echo Disable)
+	SITEINFO=$(head -n1 /etc/nginx/conf.d/$DOMAIN.conf | grep "NGINX CONFIGURATION" | rev | cut -d' ' -f3,4,5,6,7 | rev | cut -d ' ' -f2,3,4,5)
+	ACCESSLOG=$(grep access_log /etc/nginx/conf.d/$DOMAIN.conf | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
+	ERRORLOG=$(grep error_log /etc/nginx/conf.d/$DOMAIN.conf | grep "/var/log/nginx/" | awk '{print($2)}' | cut -d ';' -f1)
+	WEBROOT=$(grep root /etc/nginx/conf.d/$DOMAIN.conf | grep htdocs | awk '{print($2)}'  | cut -d ';' -f1)
 	WPDBNAME=$(grep DB_NAME /var/www/$DOMAIN/wp-config.php 2> /dev/null | cut -d"'" -f4)
 
 	echo -e "\033[36m$DOMAIN Information:\n\e[0m"
@@ -1052,7 +1005,7 @@ NGINXBUCKETSIZE()
 	nginx -t 2>&1 | grep server_names_hash_bucket_size &>> $INSTALLLOG
 	if [ $? -eq 0 ]
 	then
-		NGINXCALCULATION=$(echo "l($(ls /etc/nginx/sites-enabled/ | wc -c))/l(2)+2" | bc -l)
+		NGINXCALCULATION=$(echo "l($(ls /etc/nginx/conf.d/ | wc -c))/l(2)+2" | bc -l)
 		NGINXSETBUCKET=$(echo "2^$NGINXCALCULATION" | bc -l 2> /dev/null)
 		sed -i "s/.*server_names_hash_bucket_size.*/\tserver_names_hash_bucket_size $NGINXSETBUCKET;/" /etc/nginx/nginx.conf		
 	fi
@@ -1113,21 +1066,21 @@ MYSQLSTART()
 {
 	# Start MySQL Service
 	echo -e "\033[36mStarting MySQL Service, Please Wait...\e[0m"
-	service mysql start &>> $INSTALLLOG || OwnError "Unable To Start MySQL"
+	service mysqld start &>> $INSTALLLOG || OwnError "Unable To Start MySQL"
 }
 
 MYSQLRELOAD()
 {
 	# Reload MySQL Service
 	echo -e "\033[36mReloading MySQL Service, Please Wait...\e[0m"
-	service mysql reload &>> $INSTALLLOG || OwnError "Unable To Reloading MySQL"
+	service mysqld reload &>> $INSTALLLOG || OwnError "Unable To Reloading MySQL"
 }
 
 MYSQLRESTART()
 {
 	# Restart MySQL Service
 	echo -e "\033[36mRestarting MySQL Service, Please Wait...\e[0m"
-	service mysql restart &>> $INSTALLLOG || OwnError "Unable To Restart MySQL"
+	service mysqld restart &>> $INSTALLLOG || OwnError "Unable To Restart MySQL"
 }
 
 POSTFIXSTART()
@@ -1172,13 +1125,7 @@ EESITENAME()
 	WWWDOMAIN=$(echo $SITENAMECHECK | tr 'A-Z' 'a-z' |  sed "s'http://''" | sed "s'https://''" | sed "s'/''")
 }
 
-NGINXSYMBOLICLINK()
-{
-	# Creating Symbolic Link
-	echo -e "\033[36mCreating Symbolic Link For $DOMAIN\e[0m"
-	ln -s /etc/nginx/conf.d/$DOMAIN /etc/nginx/sites-enabled/ \
-	|| OwnError "Unable To Create Symbolic Link For $DOMAIN"
-}
+
 
 EEDOMAINSETUP()
 {
@@ -1191,11 +1138,11 @@ EEDOMAINSETUP()
 		echo -e "\033[36mCreating $DOMAIN, Please Wait...\e[0m"
 		sed "s/example.com/$DOMAIN/g" \
 		/usr/share/easyengine/nginx/$NGINXCONF \
-		> /etc/nginx/conf.d/$DOMAIN \
+		> /etc/nginx/conf.d/$DOMAIN.conf \
 		|| OwnError "Unable To Create Nginx Configuration File For $DOMAIN"
 
 		# Creating Symbolic Link
-		NGINXSYMBOLICLINK
+		
 
 		# Creating Htdocs & Logs Directory
 		echo -e "\033[36mCreating htdocs & logs Directory\e[0m"
@@ -1203,10 +1150,10 @@ EEDOMAINSETUP()
 		|| OwnError "Unable To Create htdocs & logs Directory"
 
 		# Creating Symbolic Links For Logs
-		echo -e "\033[36mCreating Symbolic Link For Logs\e[0m"
-		ln -s /var/log/nginx/$DOMAIN.access.log /var/www/$DOMAIN/logs/access.log \
-		&& ln -s /var/log/nginx/$DOMAIN.error.log /var/www/$DOMAIN/logs/error.log \
-		|| OwnError "Unable To Create Symbolic Link For $DOMAIN Logs"
+		#echo -e "\033[36mCreating Symbolic Link For Logs\e[0m"
+		#ln -s /var/log/nginx/$DOMAIN.access.log /var/www/$DOMAIN/logs/access.log \
+		#&& ln -s /var/log/nginx/$DOMAIN.error.log /var/www/$DOMAIN/logs/error.log \
+		#|| OwnError "Unable To Create Symbolic Link For $DOMAIN Logs"
 	else
 		OwnError "$DOMAIN Already Exist"
 	fi
@@ -1689,12 +1636,12 @@ DEBUG_PHP_STOP()
 
 DEBUG_PHP_FPM()
 {
-	grep "log_level = debug" /etc/php/fpm/php-fpm.conf &>> $INSTALLLOG
+	grep "log_level = debug" /etc/php-fpm.conf &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# Enable php-FPM Error Logs In Debug Mode
 		echo -e "\033[36mSetting Up php-FPM Log Level In Debug Mode, Please Wait...\e[0m"
-		sed -i "s';log_level.*'log_level = debug'" /etc/php/fpm/php-fpm.conf
+		sed -i "s';log_level.*'log_level = debug'" /etc/php-fpm.conf
 	else
 		EE_DEBUG_FPM=""
 		echo -e "\033[36mphp-FPM Log Level Is Already In Debug Mode\e[0m"
@@ -1703,12 +1650,12 @@ DEBUG_PHP_FPM()
 
 DEBUG_PHP_FPM_STOP()
 {
-	grep "log_level = notice" /etc/php/fpm/php-fpm.conf &>> $INSTALLLOG
+	grep "log_level = notice" /etc/php-fpm.conf &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# Disable php-FPM Error Logs In Debug Mode
 		echo -e "\033[36mStopping php-FPM Log Level In Debug Mode, Please Wait...\e[0m"
-		sed -i "s/log_level = debug/log_level = notice/" /etc/php/fpm/php-fpm.conf
+		sed -i "s/log_level = debug/log_level = notice/" /etc/php-fpm.conf
 	else
 		EE_DEBUG_FPM=""
 		echo -e "\033[36mphp-FPM Log Level Already In Notice (Default) Mode\e[0m"
@@ -1721,7 +1668,7 @@ DEBUG_MYSQL()
 	MYSQLROOT
 
 	# Check MySql Slow Logs Is ON
-	#grep slow-query-log /etc/mysql/my.cnf &>> $INSTALLLOG
+	#grep slow-query-log /etc/my.cnf &>> $INSTALLLOG
 	mysql -u $MYSQLUSER -p$MYSQLPASS -e "show variables like 'slow_query_log';" | grep ON &>> $INSTALLLOG
 
 	if [ $? -ne 0 ]
@@ -1732,9 +1679,9 @@ DEBUG_MYSQL()
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global slow_query_log_file = '/var/log/mysql/slow.log';"
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global long_query_time=2;"
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global log_queries_not_using_indexes = 'ON';"
-		#sed -i "/#long_query_time/i slow-query-log = 1\nslow-query-log-file = /var/log/mysql/slow.log" /etc/mysql/my.cnf
-		#sed -i "s/#long_query_time/long_query_time/" /etc/mysql/my.cnf
-		#sed -i "s/#log-queries-not-using-indexes/log-queries-not-using-indexes/" /etc/mysql/my.cnf
+		#sed -i "/#long_query_time/i slow-query-log = 1\nslow-query-log-file = /var/log/mysql/slow.log" /etc/my.cnf
+		#sed -i "s/#long_query_time/long_query_time/" /etc/my.cnf
+		#sed -i "s/#log-queries-not-using-indexes/log-queries-not-using-indexes/" /etc/my.cnf
 	else
 		# Lets Disable MySQL Restart Trigger
 		#EE_DEBUG_MYSQL=""
@@ -1748,7 +1695,7 @@ DEBUG_MYSQL_STOP()
 	MYSQLROOT
 
 	# Check MySql Slow Logs Is OFF
-	#grep slow-query-log /etc/mysql/my.cnf &>> $INSTALLLOG
+	#grep slow-query-log /etc/my.cnf &>> $INSTALLLOG
 	mysql -u $MYSQLUSER -p$MYSQLPASS -e "show variables like 'slow_query_log';" | grep ON &>> $INSTALLLOG
 	
 	if [ $? -eq 0 ]
@@ -1759,9 +1706,9 @@ DEBUG_MYSQL_STOP()
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global slow_query_log_file = '/var/log/mysql/slow.log';"
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global long_query_time=10;"
 		mysql -u $MYSQLUSER -p$MYSQLPASS -e "set global log_queries_not_using_indexes = 'OFF';"
-		#sed -i "/slow-query-log/d" /etc/mysql/my.cnf
-		#sed -i "s/long_query_time/#long_query_time/" /etc/mysql/my.cnf
-		#sed -i "s/log-queries-not-using-indexes/#log-queries-not-using-indexes/" /etc/mysql/my.cnf
+		#sed -i "/slow-query-log/d" /etc/my.cnf
+		#sed -i "s/long_query_time/#long_query_time/" /etc/my.cnf
+		#sed -i "s/log-queries-not-using-indexes/#log-queries-not-using-indexes/" /etc/my.cnf
 	else
 		# Lets Disable MySQL Restart Trigger
 		#EE_DEBUG_MYSQL=""
@@ -1900,7 +1847,7 @@ then
 
 			# Initialise Git
 			EEGITDIR=/etc/nginx/
-			EEGITINIT
+			
 			
 			# Display Success Message
 			echo -e "\033[36mNginx Successfully Installed\e[0m"
@@ -1930,8 +1877,8 @@ then
 			PHP_PACKAGES
 
 			# Initialise Git
-			EEGITDIR=/etc/php/
-			EEGITINIT
+			EEGITDIR=/etc/php.d/
+			
 
 			# Display Success Message
 			echo -e "\033[36mphp & WP-CLI Successfully Installed\e[0m"
@@ -1939,12 +1886,11 @@ then
 		elif [ "$3" = "phpmyadmin" ] || [ "$3" = "pma" ]
 		then
 
-			# Install PMA/phpMyAdmin
-			INSTALLPMA
+			
 
 			# Initialise Git
 			#EEGITDIR=/var/www/22222/htdocs/db/pma/
-			#EEGITINIT
+			#
 
 			# Display Success Message
 			echo -e "\033[36mphpMyAdmin Successfully Installed\e[0m"
@@ -1972,7 +1918,7 @@ then
 
 			# Initialize Git
 			EEGITDIR=/etc/mysql/
-			EEGITINIT
+			
 			
 			# Display Success Message
 			echo -e "\033[36mMySQL Successfully Installed\e[0m"
@@ -1988,7 +1934,7 @@ then
 
 			# Initialize Git
 			EEGITDIR=/etc/postfix/
-			EEGITINIT
+			
 			
 			# Display Success Message
 			echo -e "\033[36mPostfix Successfully Installed\e[0m"
@@ -2025,7 +1971,7 @@ then
 			PHP_PACKAGES
 
 			# Install PMA/phpMyAdmin
-			INSTALLPMA
+			
 
 			# Personal Settings For MySQL
 			COMMONMYSQL
@@ -2035,23 +1981,23 @@ then
 
 			# Initialize Git
 			EEGITDIR=/etc/nginx/
-			EEGITINIT
+			
 
 			# Initialize Git
 			EEGITDIR=/etc/php/
-			EEGITINIT
+			
 
 			# Initialize Git
 			EEGITDIR=/etc/mysql/
-			EEGITINIT
+			
 
 			# Initialize Git
 			#EEGITDIR=/var/www/22222/htdocs/db/pma/
-			#EEGITINIT
+			#
 
 			# Initialize Git
 			EEGITDIR=/etc/postfix/
-			EEGITINIT
+			
 
 			# Display Success Message
 			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Installed\e[0m"
@@ -2297,7 +2243,7 @@ then
 		
 			# Display The List Of Enabled Websites
 			echo -e "\033[36mDisplay The List Of Enabled Websites:\e[0m"
-			ls /etc/nginx/sites-enabled/ \
+			ls /etc/nginx/conf.d/ \
 			|| OwnError "Unable To Display The List Of Enabled Websites"
 		fi
 
@@ -2309,7 +2255,7 @@ then
 		EESITENAME
 		
 		# Check The Website Is Exist
-		ls /etc/nginx/conf.d/$DOMAIN &> /dev/null \
+		ls /etc/nginx/conf.d/$DOMAIN.conf &> /dev/null \
 		|| OwnError "The $DOMAIN Is Not Found In Available Websites List"
 
 		if [ $? -eq 0 ]
@@ -2317,7 +2263,7 @@ then
 
 			# Display The Specific Site Configuration
 			echo -e "\033[36mDisplay Nginx Configuration For $DOMAIN\e[0m"
-			cat /etc/nginx/conf.d/$DOMAIN \
+			cat /etc/nginx/conf.d/$DOMAIN.conf \
 			|| OwnError "Unable To Display Nginx Configuration For $DOMAIN"
 
 		fi
@@ -2789,7 +2735,7 @@ then
 		EESITENAME
 
 		# Creating Symbolic Link
-		NGINXSYMBOLICLINK
+		
 
 		# Reload Nginx Configuration
 		NGINXRELOAD
