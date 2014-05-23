@@ -39,7 +39,7 @@ EEUPDATE()
 	# Clone EasyEngine (ee) Stable Repository
 	rm -rf /tmp/easyengine
 	echo -e "\033[34mUpdating EasyEngine (ee), Please Wait...\e[0m" | tee -ai $INSTALLLOG
-	git clone -b stable git://github.com/rtCamp/easyengine.git /tmp/easyengine &>> $INSTALLLOG || OwnError "Unable To Clone Easy Engine"
+	git clone -b stable git://github.com/mylivingweb/easyengine.git /tmp/easyengine &>> $INSTALLLOG || OwnError "Unable To Clone Easy Engine"
 
 	# EasyEngine (ee) /etc Files
 	cp -a /tmp/easyengine/etc/bash_completion.d/ee /etc/bash_completion.d/ &>> $INSTALLLOG || OwnError "Unable To Copy EE Auto Complete File"
@@ -239,7 +239,7 @@ PHP_PACKAGES()
 		if [ $? -ne 0 ]
 		then
 			echo -e "\033[34mInstalling Graphviz, Please Wait...\e[0m"
-			apt-get -y install graphviz || OwnError "Unable To Install Graphviz"
+			yum -y install graphviz || OwnError "Unable To Install Graphviz"
 		fi
 	fi
 
@@ -412,10 +412,6 @@ EE122()
 	rpm -qa | grep php-fpm &>> $INSTALLLOG
 	if [ $? -eq 0 ]
 	then
-		# Install Packages
-		echo -e "\033[34mInstalling php5-xdebug percona-toolkit graphviz, Please Wait...\e[0m"
-		apt-get -y install php5-xdebug percona-toolkit graphviz
-
 		# Personal Settings For PHP
 		echo -e "\033[34mUpdating PHP Configuration Files, Please Wait...\e[0m"
 
@@ -444,7 +440,7 @@ EE122()
 	else
 		# Install Packages
 		echo -e "\033[34mInstalling percona-toolkit graphviz, Please Wait...\e[0m"
-		apt-get -y install percona-toolkit graphviz
+		yum -y install --enablerepo=remi graphviz
 	fi
 
 	# Install PHP Packages
@@ -473,7 +469,7 @@ EE133()
 EE134()
 {
 	# Nginx Update
-	if [ "$LINUX_DISTRO" == "Ubuntu" ]
+	if [ "$LINUX_DISTRO" == "CentOS" ]
 	then
 		nginx -v 2>&1 | grep 1.6.0
 		if [ $? -ne 0 ]
@@ -482,16 +478,12 @@ EE134()
 			rm /etc/apt/sources.list.d/brianmercer-nginx*
 
 			# Add rtCamp Nginx Launchpad Repository
-			echo -e "\033[34mAdding rtCamp Nginx Launchpad Repository, Please Wait...\e[0m"
-			add-apt-repository -y ppa:rtcamp/nginx &>> $INSTALLLOG \
-			|| OwnError "Unable To Add Nginx Launchpad Repository" 
-
-			# Update The APT Cache
-			echo -e "\033[34mUpdating APT Cache, Please Wait...\e[0m"
-			apt-get update &>> $INSTALLLOG || OwnError "Unable To Update APT Cache"
+			echo -e "\033[34mAdding Nginx Repository, Please Wait...\e[0m"
+			rpm -Uvh http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm &>> $INSTALLLOG \
+			|| OwnError "Unable To Add Nginx Repository" 
 
 			# Update Nginx
-			apt-get -o Dpkg::Options::="--force-confold" -y install nginx-custom \
+			yum -y install nginx \
 			|| OwnError "Unable To Update Nginx"
 		fi
 	fi

@@ -368,7 +368,7 @@ PHP_PACKAGES()
 		if [ $? -ne 0 ]
 		then
 			echo -e "\033[36mInstalling Graphviz, Please Wait...\e[0m"
-			apt-get -y install graphviz || OwnError "Unable To Install Graphviz"
+			yum -y install graphviz || OwnError "Unable To Install Graphviz"
 		fi
 	fi
 
@@ -456,7 +456,7 @@ INSTALLMYSQL()
 
 	# Install MySQL
 	echo -e "\033[36mInstalling MySQL, Please Wait...\e[0m"
-	$EEAPTGET install mysql-server mysqltuner percona-toolkit \
+	$EEAPTGET install mysql-server mysqltuner \
 	|| OwnError "Unable To Install MySQL"
 }
 
@@ -3164,7 +3164,7 @@ then
 
 	# Update EasyEngine
 	echo -e "\033[36mChecking EasyEngine Update, Please Wait...\e[0m"
-	/bin/bash <(curl -sL https://raw.github.com/rtCamp/easyengine/stable/usr/local/sbin/eeupdate)
+	/bin/bash <(curl -sL https://raw.githubusercontent.com/mylivingweb/easyengine/stable/usr/local/sbin/eeupdate)
 
 else
 	echo -e "\033[36mList Of Available Commands:\e[0m"
