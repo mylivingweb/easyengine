@@ -12,7 +12,7 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 - script adds EPEL, NGINX, and REMI repos
 - chkconfig for nginx, mysql, and php-fpm
 - secures mysql install
-- installs wordfence, ewww image optimizer, and jetpack
+- installs wordfence, ewww image optimizer, varnish-http-purge, and jetpack plugins (not activated however)
 
 **things left to do**
 - add iptables rules for 80,443 and potentially ssh 
