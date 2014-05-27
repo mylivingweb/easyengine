@@ -148,8 +148,8 @@ COMMONNGINX()
 	then
 
 		# Change Nginx Main Section Settings	
-		sed -i "s/worker_processes.*/worker_processes 4;/" /etc/nginx/nginx.conf
-		sed -i "s/worker_processes/a \worker_rlimit_nofile 100000;/" /etc/nginx/nginx.conf
+		sed -i "s/worker_processes.*/worker_processes auto;/" /etc/nginx/nginx.conf
+		sed -i "/worker_processes/a \worker_rlimit_nofile 100000;" /etc/nginx/nginx.conf
 
 		# Change Nginx Events Section Settings
 		sed -i "s/worker_connections.*/worker_connections 1024;/" /etc/nginx/nginx.conf
@@ -262,7 +262,7 @@ COMMONPHP()
 WP-CLI()
 {
 	# Install WP-CLI
-	if [ ! -d /usr/local/bin/wp ]
+	if [ ! -f /usr/local/bin/wp ]
 	then
 		echo -e "\033[31mWP-CLI Command Not Found\e[0m"
 		echo -e "\033[36mInstalling WP-CLI, Please Wait...\e[0m"
@@ -279,8 +279,7 @@ WP-CLI()
 
 PHP_PACKAGES()
 {
-	# Change Ownership
-	chown -R $PHPUSER:$PHPUSER /var/www/22222 || OwnError "Unable To Change Ownership For /var/www/22222"
+	echo -e "\033[36mLook out echoing nothing here\e[0m"
 }
 
 

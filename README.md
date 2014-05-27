@@ -24,10 +24,6 @@ curl -sL https://raw.githubusercontent.com/mylivingweb/easyengine/master/install
 ee system install                     # install nginx, php, mysql, postfix 
 ee site create example.com --wp       # create example.com and install wordpress on it
 ```
-**nginx will fail to reload due to unknown log format**
-
-## Upgrading which has not been tested at all for CentOS and will most likely fail
-
 ## More Site Creation Commands
 
 ### Standard WordPress Sites
