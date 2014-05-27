@@ -20,25 +20,13 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 ## Quick Start
 
 ```bash
-curl https://raw.githubusercontent.com/mylivingweb/easyengine/master/install.sh | sudo bash         # install easyengine
+curl -sL https://raw.githubusercontent.com/mylivingweb/easyengine/master/install.sh | sudo bash         # install easyengine
 ee system install                     # install nginx, php, mysql, postfix 
 ee site create example.com --wp       # create example.com and install wordpress on it
 ```
 **nginx will fail to reload due to unknown log format**
 
 ## Upgrading which has not been tested at all for CentOS and will most likely fail
-
-### From easyengine 1.0 to 1.1 and above
-
-```bash
-/bin/bash <(curl -sL https://raw.github.com/rtCamp/easyengine/stable/usr/local/sbin/eeupdate)
-```
-
-### From easyengine 1.1 and above
-
-```bash
-ee update
-```
 
 ## More Site Creation Commands
 
@@ -92,9 +80,3 @@ ee site create example.com --mysql    # create example.com with php & mysql supp
 - [FAQ] (http://rtcamp.com/easyengine/faq/)
 - [Conventions used] (http://rtcamp.com/wordpress-nginx/tutorials/conventions/)
 
-## Donations
-- [Using PayPal] (https://rtcamp.com/donate/?project=easyengine)
-
-## License
-
-Same [GPL] (http://www.gnu.org/licenses/gpl-2.0.txt) that WordPress uses!

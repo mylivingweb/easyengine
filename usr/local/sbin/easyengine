@@ -1065,7 +1065,7 @@ PERMISSIONANDGIT()
 	# Take Nginx Configuration In Git Version Control
 	EEGITDIR=/etc/nginx
 	EEGITMESSAGE="Create Website With $WPNETWORKSITE $WPCACHEOPTION Option: $DOMAIN"
-	EEGITCOMMIT
+	
 }
 
 TOTALCACHENGINX()
@@ -2442,7 +2442,6 @@ then
 		# Take Nginx Configuration In Git Version Control
 		EEGITDIR=/etc/nginx
 		EEGITMESSAGE="Enable Website: $DOMAIN"
-		EEGITCOMMIT
 
 	elif [ "$2" = "disable" ]
 	then
@@ -2500,7 +2499,7 @@ then
 			# Take Nginx Configuration In Git Version Control
 			EEGITDIR=/etc/nginx
 			EEGITMESSAGE="Delete Website With $SITEDELETEARG Option: $DOMAIN"
-			EEGITCOMMIT
+			
 
 		elif [ "$SITEDELETEARG" = "--all-no-prompt" ]
 		then
@@ -2518,7 +2517,7 @@ then
 			# Take Nginx Configuration In Git Version Control
 			EEGITDIR=/etc/nginx
 			EEGITMESSAGE="Delete Website With $SITEDELETEARG Option: $DOMAIN"
-			EEGITCOMMIT
+			
 		fi
 
 	elif [ "$2" = "edit" ]
@@ -2536,7 +2535,7 @@ then
 			# Take Nginx Configuration In Git Version Control
 			EEGITDIR=/etc/nginx
 			EEGITMESSAGE="Edited Website: $DOMAIN"
-			EEGITCOMMIT
+			
 
 			# Reload Nginx Configuration
 			NGINXRELOAD
