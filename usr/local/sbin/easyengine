@@ -149,7 +149,7 @@ COMMONNGINX()
 
 		# Change Nginx Main Section Settings	
 		sed -i "s/worker_processes.*/worker_processes 4;/" /etc/nginx/nginx.conf
-		sed -i "/worker_processes/a \worker_rlimit_nofile 100000;" /etc/nginx/nginx.conf
+		sed -i "s/worker_processes/a \worker_rlimit_nofile 100000;" /etc/nginx/nginx.conf
 
 		# Change Nginx Events Section Settings
 		sed -i "s/worker_connections.*/worker_connections 1024;/" /etc/nginx/nginx.conf
@@ -185,7 +185,7 @@ COMMONNGINX()
 	EESOURCE="/usr/share/easyengine/nginx/common"
 	EEDEST="/etc/nginx/common"
 	
-	cp /usr/share/easyengine/nginx/22222 /etc/nginx/conf.d/22222.conf || OwnError "Unable To Copy 22222 Nginx Configuration File"
+	#cp /usr/share/easyengine/nginx/22222 /etc/nginx/conf.d/22222.conf || OwnError "Unable To Copy 22222 Nginx Configuration File"
 
 }
 
@@ -280,61 +280,6 @@ WP-CLI()
 
 PHP_PACKAGES()
 {
-	# Nginx Fastcgi Cache Cleanup
-	if [ ! -d /var/www/22222/htdocs/cache/nginx ]
-	then
-		mkdir -p /var/www/22222/htdocs/cache/nginx || OwnError "Unable To Create Nginx Fastcgi Cleanup Directory"
-
-		# Downloading Nginx FastCGI Cleanup Script
-		echo -e "\033[36mDownloading Nginx FastCGI Cleanup Script, Please Wait...\e[0m"
-		wget --no-check-certificate -cqO /var/www/22222/htdocs/cache/nginx/clean.php https://raw.githubusercontent.com/rtCamp/eeadmin/master/cache/nginx/clean.php \
-		|| OwnError "Unable To Download Nginx Fastcgi Cleanup Script"	
-	fi
-
-	# Opcache Settings
-	if [ ! -d /var/www/22222/htdocs/cache/opcache ]
-	then
-		# Create Directory
-		mkdir -p /var/www/22222/htdocs/cache/opcache || OwnError "Unable To Create Opcache Directory"
-
-		# Download Opcache Status Files
-		echo -e "\033[36mInstalling Opcache Tool, Please Wait...\e[0m"
-		wget --no-check-certificate -cqO /var/www/22222/htdocs/cache/opcache/opcache.php https://raw.github.com/rlerdorf/opcache-status/master/opcache.php || OwnError "Unable To Download Opcache Tool opcache.php"
-		wget --no-check-certificate -cqO /var/www/22222/htdocs/cache/opcache/opgui.php https://raw.github.com/amnuts/opcache-gui/master/index.php || OwnError "Unable To Download Opcache Tool opgui.php"
-		wget --no-check-certificate -cqO /var/www/22222/htdocs/cache/opcache/ocp.php https://gist.github.com/ck-on/4959032/raw/0b871b365fd6cfcd6d2be030c1f33d1ad6a475cb/ocp.php || OwnError "Unable To Download Opcache Toolocp.php"
-	fi
-
-	# Memcache Settings
-	if [ ! -d /var/www/22222/htdocs/cache/memcache ]
-	then
-		# Create Directory
-		mkdir -p /var/www/22222/htdocs/cache/memcache || OwnError "Unable To Create Memcache Directory"
-
-		# Download phpMemcachedAdmin
-		echo -e "\033[36mInstalling Memcache Tool, Please Wait...\e[0m"
-		wget --no-check-certificate -cqO /var/www/22222/htdocs/cache/memcache/memcache.tar.gz http://phpmemcacheadmin.googlecode.com/files/phpMemcachedAdmin-1.2.2-r262.tar.gz \
-		|| OwnError "Unable To Download Memcache Tool"
-
-		# Extract phpMemcachedAdmin
-		tar -zxf /var/www/22222/htdocs/cache/memcache/memcache.tar.gz -C /var/www/22222/htdocs/cache/memcache
-
-		# Remove Unwanted Files
-		rm -f /var/www/22222/htdocs/cache/memcache/memcache.tar.gz
-	fi
-
-	# Create info.php File To Display The phpinfo Information
-	echo -e "<?php \n\t phpinfo(); \n?>" &>> /var/www/22222/htdocs/php/info.php
-
-	# Fake php-FPM Status Pages
-	if [ ! -d /var/www/22222/htdocs/fpm/status/ ]
-	then
-			mkdir -p /var/www/22222/htdocs/fpm/status/ || OwnError "Unable To Create FPM Status Directory"
-			touch /var/www/22222/htdocs/fpm/status/{php,debug}
-	fi
-
-	# Call PHPUSERINFO Function For PHP User Details
-	PHPUSERINFO
-
 	# Change Ownership
 	chown -R $PHPUSER:$PHPUSER /var/www/22222 || OwnError "Unable To Change Ownership For /var/www/22222"
 }
@@ -376,9 +321,10 @@ COMMONMYSQL()
 
 	# Decrease MySQL Wait Timeout
 	sed -i "/#max_connections/a wait_timeout = 30 \ninteractive_timeout = 60" /etc/my.cnf
-	
+	service mysqld restart
 	/usr/bin/mysql_secure_installation
-
+	chkconfig mysqld on
+	
 	# Call PHPUSERINFO Function For PHP User Details
 	PHPUSERINFO
 
@@ -1052,7 +998,7 @@ EEWPDBSETUP()
 	WPADMINUSER=$(grep wpadminuser /etc/easyengine/ee.conf | awk '{print($3)}')
 	if [[ $WPADMINUSER = "" ]]
 	then
-		WPADMINUSER=admin
+		read -p "Enter admin account username: " WPADMINUSER
 	fi
 
 	# WordPress Default Password: Random Password
@@ -1066,7 +1012,8 @@ EEWPDBSETUP()
 	WPADMINEMAIL=$(grep wpadminemail /etc/easyengine/ee.conf | awk '{print($3)}')
 	if [[ $WPADMINEMAIL = "" ]]
 	then
-		WPADMINEMAIL=`git config user.email`
+		read -p "Enter admin account email address: " WPADMINEMAIL
+		
 	fi
 
 	# Create WordPress Tables
@@ -2256,8 +2203,6 @@ then
 				SETUPWPNETWORK
 				PERMISSIONANDGIT
 
-				# Setup phpMyAdmin
-				#ln -s /var/www/22222/htdocs/db/pma /var/www/$DOMAIN/htdocs/pma
 
 				# Display Success Message
 				echo

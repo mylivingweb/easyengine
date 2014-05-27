@@ -6,16 +6,14 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 
 **EasyEngine CentOS currently supports:**
 
-- CentOS 6.5
+- CentOS 6.X
 
 **This script will partially work for now**
 - script adds REPL, NGINX, and REMI repos
 
 **things left to do**
-- fix default nginx config for new sites
 - start php-fpm, mysql, nginx
 - add chkconfig for above
-- go over modules that were removed, like phpmyadmin
 - add iptables rules for 80,443 and potentially ssh 
 
 
