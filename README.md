@@ -11,6 +11,8 @@ easyengine centos (ee) is a linux shell-script collection, which makes it easy t
 - chkconfig for nginx, mysql, and php-fpm
 - secures mysql install
 - installs wordfence, ewww image optimizer, varnish-http-purge, and jetpack plugins (not activated however)
+- user can input admin username, prompted to not use admin or root
+- user can input admin email address
 
 **things left to do**
 - add iptables rules for 80,443 and potentially ssh 

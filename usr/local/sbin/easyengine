@@ -243,7 +243,7 @@ COMMONPHP()
 		sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers = 30/" /etc/php-fpm.d/www.conf
 		sed -i "s/;request_terminate_timeout.*/request_terminate_timeout = 300/" /etc/php-fpm.d/www.conf
 		sed -i "s/pm = dynamic/pm = ondemand/" /etc/php-fpm.d/www.conf || OwnError "Unable To Chnage Process Manager From Dynamic To Ondemand"
-		
+		sed 's/apache/nginx/' /etc/php-fpm.d/www.conf #Change user and group to nginx
 		# Change PHP Fastcgi Socket
 		sed -i "s'listen = /var/run/php-fpm.sock'listen = 127.0.0.1:9000'" /etc/php-fpm.d/www.conf || OwnError "Unable To Change PHP Fastcgi Socket"
 
