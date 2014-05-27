@@ -186,41 +186,6 @@ COMMONNGINX()
 	EEDEST="/etc/nginx/common"
 	
 	cp /usr/share/easyengine/nginx/22222 /etc/nginx/conf.d/22222.conf || OwnError "Unable To Copy 22222 Nginx Configuration File"
-	#ln -s /etc/nginx/conf.d/22222.conf /etc/nginx/sites-enabled/ || OwnError "Unable To Create Symbolic Link For 22222 Nginx Configuration"
-
-	# EasyEngine Admin Logs Setup
-	if [ ! -d /var/www/22222/logs ]
-	then
-		mkdir -p /var/www/22222/logs || OwnError "Unable To Create /var/www/22222/logs"
-	fi
-
-	# Symbolic Links
-	#ln -s /var/log/nginx/eeadmin.access.log /var/www/22222/logs/access.log
-	#ln -s /var/log/nginx/eeadmin.error.log /var/www/22222/logs/error.log
-
-	# EasyEngine Admin SSL Setup
-	if [ ! -d /var/www/22222/cert ]
-	then
-		mkdir -p /var/www/22222/cert || OwnError "Unable To Create /var/www/22222/cert"
-	fi
-
-	# Generate SSL Key
-	echo -e "\033[36mGenerating SSL Private Key, Please Wait...\e[0m"
-	openssl genrsa -out /var/www/22222/cert/22222.key 2048 &>> $INSTALLLOG \
-	|| OwnError "Unable To Generate SSL Private Key"
-
-	echo -e "\033[36mGenerating a Certificate Signing Request (CSR), Please Wait...\e[0m"
-	openssl req -new -batch -subj /commonName=127.0.0.1/ -key /var/www/22222/cert/22222.key -out /var/www/22222/cert/22222.csr &>> $INSTALLLOG \
-	|| OwnError "Unable To Generate Certificate Signing Request (CSR)"
-
-	echo -e "\033[36mRemoving Passphrase From SSL Private Key, Please Wait...\e[0m"
-	mv /var/www/22222/cert/22222.key /var/www/22222/cert/22222.key.org
-	openssl rsa -in /var/www/22222/cert/22222.key.org -out /var/www/22222/cert/22222.key &>> $INSTALLLOG \
-	|| OwnError "Unable To Remove Passphrase From SSL Private Key"
-
-	echo -e "\033[36mGenerating SSL Certificate, Please Wait...\e[0m"
-	openssl x509 -req -days 3652 -in /var/www/22222/cert/22222.csr -signkey /var/www/22222/cert/22222.key -out /var/www/22222/cert/22222.crt &>> $INSTALLLOG \
-	|| OwnError "Unable To Generate SSL Certificate"
 
 }
 
@@ -233,6 +198,7 @@ INSTALLPHP()
 	$EEAPTGET --enablerepo=remi install php-common php-mysqlnd php-xmlrpc \
 	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
 	php-memcache memcached mysql-server || OwnError "Unable To Install PHP"
+	
 }
 
 COMMONPHP()
@@ -297,17 +263,12 @@ COMMONPHP()
 WP-CLI()
 {
 	# Install WP-CLI
-	if [ ! -d /usr/share/easyengine/wp-cli ]
+	if [ ! -d /usr/local/bin/wp ]
 	then
 		echo -e "\033[31mWP-CLI Command Not Found\e[0m"
 		echo -e "\033[36mInstalling WP-CLI, Please Wait...\e[0m"
-		curl -kL https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > wp-cli.phar &>> $INSTALLLOG \
+		curl -kL https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > wp-cli.phar && chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/wp &>> $INSTALLLOG \
 		|| OwnError "Unable To Install WP-CLI"
-		chmod +x wp-cli.phar
-		mv wp-cli.phar /usr/local/bin/wp
-
-		# Add WP-CLI Command In PATH Variable
-		#ln -s /usr/share/easyengine/wp-cli/bin/wp /usr/bin/wp || OwnError "Unable To Create Symbolic Link For WP-CLI Command"
 
 		# Add WP-CLI Auto Completion
 		#cp -i /usr/share/easyengine/wp-cli/vendor/wp-cli/wp-cli/utils/wp-completion.bash /etc/bash_completion.d/
@@ -359,25 +320,6 @@ PHP_PACKAGES()
 
 		# Remove Unwanted Files
 		rm -f /var/www/22222/htdocs/cache/memcache/memcache.tar.gz
-	fi
-
-	if [ ! -d /var/www/22222/htdocs/php/webgrind/ ]
-	then
-		# Download Opcache Status Files
-		mkdir -p mkdir -p /var/www/22222/htdocs/php/webgrind/ ||  OwnError "Unable To Create webgrind Directory"
-		
-		# Download Webgrind
-		echo -e "\033[36mCloning Webgrind, Please Wait...\e[0m"
-		git clone https://github.com/jokkedk/webgrind.git /var/www/22222/htdocs/php/webgrind/ &>> $INSTALLLOG || OwnError "Unable To Clone Webgrind"
-		sed -i "s'/usr/local/bin/dot'/usr/bin/dot'" /var/www/22222/htdocs/php/webgrind/config.php
-
-		# Install Graphviz
-		rpm -qa grep graphviz &>> $INSTALLLOG
-		if [ $? -ne 0 ]
-		then
-			echo -e "\033[36mInstalling Graphviz, Please Wait...\e[0m"
-			yum -y install graphviz || OwnError "Unable To Install Graphviz"
-		fi
 	fi
 
 	# Create info.php File To Display The phpinfo Information
@@ -434,60 +376,13 @@ COMMONMYSQL()
 
 	# Decrease MySQL Wait Timeout
 	sed -i "/#max_connections/a wait_timeout = 30 \ninteractive_timeout = 60" /etc/my.cnf
-
-	# Anemometer Setup
-	if [ ! -d /var/www/22222/htdocs/db/anemometer ]
-	then
-		mkdir -p /var/www/22222/htdocs/db/anemometer/ || OwnError "Unable To Create Anemometer Directory"
-
-		# Download Anemometer
-		echo -e "\033[36mCloning Anemometer, Please Wait...\e[0m"
-		git clone https://github.com/box/Anemometer.git /var/www/22222/htdocs/db/anemometer &>> $INSTALLLOG \
-		|| OwnError "Unable To Clone Anemometer"
-
-		# Setup Anemometer
-		# Collect MySQL Login Details
-		MYSQLROOT
-
-		# Setup Anemometer Database
-		mysql -u $MYSQLUSER -p$MYSQLPASS < /var/www/22222/htdocs/db/anemometer/install.sql \
-		|| OwnError "Unable To Import Anemometer Database"
-
-		# Setup Anemometer Database Grants
-		ANEMOMETERPASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n1)
-		mysql -u $MYSQLUSER -p$MYSQLPASS -e "grant all on slow_query_log.* to 'anemometer'@'localhost' IDENTIFIED BY '$ANEMOMETERPASS';"
-
-		# Execute On MySQL Logrotation
-		sed -i "/endscript/,/}/d" /etc/logrotate.d/mysql-server
-		echo -e "                  pt-query-digest --user=anemometer --password=$ANEMOMETERPASS \\" >> /etc/logrotate.d/mysql-server
-		echo -e "                  --review D=slow_query_log,t=global_query_review \\" >> /etc/logrotate.d/mysql-server
-		echo -e "                  --review-history D=slow_query_log,t=global_query_review_history \\" >> /etc/logrotate.d/mysql-server
-		echo -e "                  --no-report --limit=0% --filter=\" \\\$event->{Bytes} = length(\\\$event->{arg}) and \\\$event->{hostname}="\\\"\$HOSTNAME\\\"\" /var/log/mysql/slow.log >> /etc/logrotate.d/mysql-server
-		echo -e "\t\tendscript" >> /etc/logrotate.d/mysql-server
-		echo -e "}" >> /etc/logrotate.d/mysql-server
-
-		# Copy Anemometer Configuration File
-		cp /var/www/22222/htdocs/db/anemometer/conf/sample.config.inc.php /var/www/22222/htdocs/db/anemometer/conf/config.inc.php \
-		|| OwnError "Unable To Copy Anemometer Configuration File"
-
-		# Update Anemoneter Configuration File
-		sed -i "s/root/anemometer/g" /var/www/22222/htdocs/db/anemometer/conf/config.inc.php
-		sed -i "/password/ s/''/'$ANEMOMETERPASS'/g" /var/www/22222/htdocs/db/anemometer/conf/config.inc.php
-
-	fi
+	
+	/usr/bin/mysql_secure_installation
 
 	# Call PHPUSERINFO Function For PHP User Details
 	PHPUSERINFO
 
-	# Change Ownership
-	chown -R $PHPUSER:$PHPUSER /var/www/22222/htdocs/db/anemometer/ || OwnError "Unable To Change Ownership For Anemometer"
-}
 
-INSTALLPOSTFIX()
-{
-	# Install Postfix
-	echo -e "\033[36mInstalling Postfix, Please Wait...\e[0m"
-	$EEAPTGET install postfix || OwnError "Unable To Install Postfix"
 }
 
 INSTALLALL()
@@ -531,13 +426,6 @@ REMOVEWPCLI()
 	# Remove WP-CLI
 	echo -e "\033[36mRemoving WP-CLI, Please Wait...\e[0m"
 	rm -rf /usr/share/easyengine/wp-cli /usr/bin/wp /etc/bash_completion.d/wp-completion.bash || OwnError "Unable To Remove WP-CLI"
-}
-
-REMOVEPMA()
-{
-	# Remove PMA/phpMyAdmin
-	echo -e "\033[36mRemoving phpMyAdmin, Please Wait...\e[0m"
-	rm -rf /var/www/22222/htdocs/db/pma || OwnError "Unable To Remove phpMyAdmin"
 }
 
 REMOVEMYSQL()
@@ -665,45 +553,6 @@ EE_SYSTEM_STATUS()
 	echo
 	echo
 }
-
-
-# EE GIT Function
-#()
-#{
-	# Change Directory
-#	cd $- || OwnError "Unable To Change Directory $EEGITDIR"
-#
-#	# Check .git
-#	if [ ! -d .git ]
-#	then
-#		# Initialise Git
-#		echo -e "\033[36mInitialise Git On $EEGITDIR...\e[0m"
-#		git init &>> $INSTALLLOG || OwnError "Unable To Initialize Git On $EEGITDIR"
-#	fi
-#
-#	# Check For Untracked Files
-#	if [ $(git status -s | wc -l) -ne 0 ]
-#	then
-#		# Add Files In Git Version Control
-#		git add --all && git commit -am "Initialize Git On $EEGITDIR"  &>> $INSTALLLOG \
-#		|| OwnError "Unable To Git Commit On $EEGITDIR"
-#	fi
-#}
-
-#EEGITCOMMIT()
-#{#
-#	cd $EEGITDIR || OwnError "Unable To Change Directory $EEGITDIR"
-#
-#	if [ $(git status -s | wc -l) -ne 0 ]
-#	then
-#		# Git Commit Functionality
-#		echo -e "\033[36mTake $EEGITDIR Configuration In Git Version Control...\e[0m"
-#
-#		# Add Newly Created Files && Commit It
-#		git add --all && git commit -am "$EEGITMESSAGE" &>> $INSTALLLOG \
-#		|| OwnError "Unable To Git Commits On $EEGITDIR"
-#	fi
-#}
 
 MYSQLUSERPASS()
 {
@@ -968,7 +817,6 @@ EEINFO()
 
 	# Common Locations:
 	echo -e "\033[36m\n\nEasyEngine ($(ee version| awk '{print $3}')) Common Locations:\n\e[0m"
-	echo -e "\033[36mphpMyAdmin:\t\t\t \033[37mhttp://example.com/pma\e[0m"
 	echo -e "\033[36mPHP Status:\t\t\t \033[37mhttp://example.com/status\e[0m"
 	echo -e "\033[36mNginx Status:\t\t\t \033[37mhttp://example.com/nginx_status\e[0m"
 	echo -e "\033[36mEasyEngine Log File:\t\t \033[37m/var/log/easyengine/install.log\e[0m"
@@ -1130,7 +978,7 @@ EESITENAME()
 EEDOMAINSETUP()
 {
 	#Check The Nginx Configuration Exist For $DOMAIN
-	ls /etc/nginx/conf.d/$DOMAIN &> $ERRORLOG
+	ls /etc/nginx/conf.d/$DOMAIN.conf &> $ERRORLOG
 
 	if [ $? -ne 0 ]
 	then
@@ -1141,19 +989,10 @@ EEDOMAINSETUP()
 		> /etc/nginx/conf.d/$DOMAIN.conf \
 		|| OwnError "Unable To Create Nginx Configuration File For $DOMAIN"
 
-		# Creating Symbolic Link
-		
-
 		# Creating Htdocs & Logs Directory
 		echo -e "\033[36mCreating htdocs & logs Directory\e[0m"
-		mkdir -p /var/www/$DOMAIN/htdocs && mkdir -p /var/www/$DOMAIN/logs \
+		mkdir -p /var/www/$DOMAIN/htdocs && mkdir -p /var/log/nginx/$DOMAIN/logs \
 		|| OwnError "Unable To Create htdocs & logs Directory"
-
-		# Creating Symbolic Links For Logs
-		#echo -e "\033[36mCreating Symbolic Link For Logs\e[0m"
-		#ln -s /var/log/nginx/$DOMAIN.access.log /var/www/$DOMAIN/logs/access.log \
-		#&& ln -s /var/log/nginx/$DOMAIN.error.log /var/www/$DOMAIN/logs/error.log \
-		#|| OwnError "Unable To Create Symbolic Link For $DOMAIN Logs"
 	else
 		OwnError "$DOMAIN Already Exist"
 	fi
@@ -1845,10 +1684,6 @@ then
 			# Restart Nginx To Take Effect Of COMMONNGINX Functions
 			NGINXRESTART
 
-			# Initialise Git
-			EEGITDIR=/etc/nginx/
-			
-			
 			# Display Success Message
 			echo -e "\033[36mNginx Successfully Installed\e[0m"
 
@@ -1857,11 +1692,6 @@ then
 
 			# Add PHP Launchpad Repository
 			EPELREPO
-
-			# Fix GPG Key Problems
-			GPGKEY
-
-			# Update The APT Cache
 
 			# Install php
 			INSTALLPHP
@@ -1876,37 +1706,11 @@ then
 			WP-CLI
 			PHP_PACKAGES
 
-			# Initialise Git
-			EEGITDIR=/etc/php.d/
-			
-
 			# Display Success Message
 			echo -e "\033[36mphp & WP-CLI Successfully Installed\e[0m"
 
-		elif [ "$3" = "phpmyadmin" ] || [ "$3" = "pma" ]
-		then
-
-			
-
-			# Initialise Git
-			#EEGITDIR=/var/www/22222/htdocs/db/pma/
-			#
-
-			# Display Success Message
-			echo -e "\033[36mphpMyAdmin Successfully Installed\e[0m"
-
 		elif [ "$3" = "mysql" ]
 		then
-
-			# Add Percona Repository
-			#PERCONA_REPO
-
-			# Fix GPG Key Problems
-			#GPGKEY
-
-			# Update The APT Cache
-			
-
 			# Install MySQL
 			INSTALLMYSQL
 
@@ -1916,35 +1720,11 @@ then
 			# Restart MySQL
 			MYSQLRESTART
 
-			# Initialize Git
-			EEGITDIR=/etc/mysql/
-			
-			
 			# Display Success Message
 			echo -e "\033[36mMySQL Successfully Installed\e[0m"
 
-		elif [ "$3" = "postfix" ]
-		then
-
-			# Update The APT Cache
-			
-			
-			# Install Postfix
-			INSTALLPOSTFIX
-
-			# Initialize Git
-			EEGITDIR=/etc/postfix/
-			
-			
-			# Display Success Message
-			echo -e "\033[36mPostfix Successfully Installed\e[0m"
-
 		elif [ "$3" = "all" ] || [ "$3" = "" ]
 		then
-			
-			# Install Python Software Properties
-			
-
             # Add Nginx  Repository
 			NGINXREPO
 			
@@ -1970,34 +1750,11 @@ then
 			WP-CLI
 			PHP_PACKAGES
 
-			# Install PMA/phpMyAdmin
-			
-
 			# Personal Settings For MySQL
 			COMMONMYSQL
 
 			# Restart MySQL
 			MYSQLRESTART
-
-			# Initialize Git
-			EEGITDIR=/etc/nginx/
-			
-
-			# Initialize Git
-			EEGITDIR=/etc/php/
-			
-
-			# Initialize Git
-			EEGITDIR=/etc/mysql/
-			
-
-			# Initialize Git
-			#EEGITDIR=/var/www/22222/htdocs/db/pma/
-			#
-
-			# Initialize Git
-			EEGITDIR=/etc/postfix/
-			
 
 			# Display Success Message
 			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Installed\e[0m"
@@ -2734,9 +2491,6 @@ then
 		SITENAMECHECK=$3
 		EESITENAME
 
-		# Creating Symbolic Link
-		
-
 		# Reload Nginx Configuration
 		NGINXRELOAD
 
@@ -2752,18 +2506,12 @@ then
 		SITENAMECHECK=$3
 		EESITENAME
 
-		# Remove Symbolic Link
-		echo -e "\033[36mRemoving Symbolic Link For $DOMAIN\e[0m"
-		rm /etc/nginx/sites-enabled/$DOMAIN \
-		|| OwnError "Unable To Remove Symbolic Link For $DOMAIN"
+		echo -e "\033[36mRemoving conf file $DOMAIN\e[0m"
+		rm /etc/nginx/conf.d/$DOMAIN.conf \
+		|| OwnError "Unable To Remove conf file For $DOMAIN"
 
 		# Reload Nginx Configuration
 		NGINXRELOAD
-
-		# Take Nginx Configuration In Git Version Control
-		EEGITDIR=/etc/nginx
-		EEGITMESSAGE="Disable Website: $DOMAIN"
-		EEGITCOMMIT
 
 	elif [ "$2" = "delete" ]
 	then
