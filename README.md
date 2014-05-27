@@ -10,10 +10,10 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 
 **This script will partially work for now**
 - script adds REPL, NGINX, and REMI repos
+- chkconfig for nginx, mysql, and php-fpm
+- secures mysql install 
 
 **things left to do**
-- start php-fpm, mysql, nginx
-- add chkconfig for above
 - add iptables rules for 80,443 and potentially ssh 
 
 
@@ -21,7 +21,7 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 
 ```bash
 curl -sL https://raw.githubusercontent.com/mylivingweb/easyengine/master/install.sh | sudo bash         # install easyengine
-ee system install                     # install nginx, php, mysql, postfix 
+ee system install                     # install nginx, php-fpm, mysql, only run once
 ee site create example.com --wp       # create example.com and install wordpress on it
 ```
 ## More Site Creation Commands

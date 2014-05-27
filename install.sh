@@ -226,5 +226,5 @@ echo
 # Display Success Message
 echo -e "\033[36mEasyEngine (ee) Installed Successfully\e[0m" | tee -ai $INSTALLLOG
 echo -e "\033[36mEasyEngine (ee) Help: http://rtcamp.com/easyengine/docs/\e[0m" | tee -ai $INSTALLLOG
-echo -e "\033[36mPlease run, ee system install , to finish installation[0m" | tee -ai $INSTALLLOG
+echo -e "\033[36mPlease run, ee system install , to finish installation\e[0m" | tee -ai $INSTALLLOG
 echo
