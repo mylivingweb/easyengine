@@ -149,7 +149,7 @@ COMMONNGINX()
 
 		# Change Nginx Main Section Settings	
 		sed -i "s/worker_processes.*/worker_processes 4;/" /etc/nginx/nginx.conf
-		sed -i "s/worker_processes/a \worker_rlimit_nofile 100000;" /etc/nginx/nginx.conf
+		sed -i "s/worker_processes/a \worker_rlimit_nofile 100000;/" /etc/nginx/nginx.conf
 
 		# Change Nginx Events Section Settings
 		sed -i "s/worker_connections.*/worker_connections 1024;/" /etc/nginx/nginx.conf
@@ -170,11 +170,8 @@ COMMONNGINX()
 	then
 		mkdir /etc/nginx/conf.d || OwnError "Unable To Create /etc/nginx/conf.d"
 	fi
+	chkconfig nginx on
 
-	if [ ! -d /etc/nginx/common ]
-	then
-		mkdir /etc/nginx/common || OwnError "Unable To Create /etc/nginx/common"
-	fi
 
 	# Update Nginx Configuration Files
 	EESOURCE="/usr/share/easyengine/nginx/conf.d"
@@ -198,6 +195,8 @@ INSTALLPHP()
 	$EEAPTGET --enablerepo=remi install php-common php-mysqlnd php-xmlrpc \
 	php-curl php-gd php-cli php-fpm php-imap php-mcrypt php-xdebug \
 	php-memcache memcached mysql-server || OwnError "Unable To Install PHP"
+	chkconfig php-fpm on
+	service php-fpm restart
 	
 }
 
