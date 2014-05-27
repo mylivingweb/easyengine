@@ -1,4 +1,4 @@
-<img src="https://d3qt5vpr7p9rgn.cloudfront.net/wp-content/uploads/2013/08/easy-engine-logo-2-RS1.png" alt="EasyEngine Logo" align="right" />
+<img src="https://www.evernote.com/shard/s71/sh/a7354216-9e3b-4c26-a647-1887ba35ae86/cc2b3d9bb10dfca17559e9218c9b9974/deep/0/root@testbox--.png" alt="Super Cool CLI Picture" align="right" />
 
 easyengine centos (ee) is a linux shell-script collection, which makes it easy to manage your wordpress sites running on nginx web-server.
 

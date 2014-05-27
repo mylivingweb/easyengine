@@ -1002,7 +1002,7 @@ EEWPDBSETUP()
 					read -p "Enter admin account username (IT IS SUGGESTED TO NOT USE ADMIN OR ROOT): " WPADMINUSER
 				if [[ $WPADMINUSER = "admin"  ||  $WPADMINUSER = "root"  ||  $WPADMINUSER = "Admin"  ||  $WPADMINUSER = "Root" ]]
 				then
-					echo -e "\033[31mDon't say we didn't tell you so...\e[0m"
+					echo -e "\033[31mWe warned you...\e[0m"
 				fi
 			fi
 	fi
