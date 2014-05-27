@@ -6,7 +6,7 @@ before_install:
 
 
 before_script:
-- sudo yum remove mysql* php*
+#- sudo yum remove mysql* php*
 
 script:
 - sudo bash -x install.sh
