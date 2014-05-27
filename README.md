@@ -9,7 +9,7 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 - CentOS 6.X
 
 **This script will partially work for now**
-- script adds REPL, NGINX, and REMI repos
+- script adds EPEL, NGINX, and REMI repos
 - chkconfig for nginx, mysql, and php-fpm
 - secures mysql install
 - installs wordfence, ewww image optimizer, and jetpack
@@ -37,6 +37,7 @@ ee site create example.com --wpsc                # install wordpress with wp-sup
 ee site create example.com --wpfc                # install wordpress + nginx fastcgi_cache
 ee site disable example.com 					 # moves .conf file to directory and reloads nginx
 ee site enable example.com						 # moves .conf file from directory to conf.d and reload nginx
+ee site delete example.com						 # removes db, db user, and webroot, this is permanent
 ```
 
 ### WordPress Multsite with subdirectory 

@@ -996,7 +996,15 @@ EEWPDBSETUP()
 	WPADMINUSER=$(grep wpadminuser /etc/easyengine/ee.conf | awk '{print($3)}')
 	if [[ $WPADMINUSER = "" ]]
 	then
-		read -p "Enter admin account username: " WPADMINUSER
+		read -p "Enter admin account username (do not use admin or root): " WPADMINUSER
+			if [[ $WPADMINUSER = "admin"  ||  $WPADMINUSER = "root"  ||  $WPADMINUSER = "Admin"  ||  $WPADMINUSER = "Root" ]]
+				then
+					read -p "Enter admin account username (IT IS SUGGESTED TO NOT USE ADMIN OR ROOT): " WPADMINUSER
+				if [[ $WPADMINUSER = "admin"  ||  $WPADMINUSER = "root"  ||  $WPADMINUSER = "Admin"  ||  $WPADMINUSER = "Root" ]]
+				then
+					echo -e "\033[31mDon't say we didn't tell you so...\e[0m"
+				fi
+			fi
 	fi
 
 	# WordPress Default Password: Random Password
@@ -1100,6 +1108,8 @@ NGINXHELPER()
 	wp plugin --allow-root install ewww-image-optimizer &>> $INSTALLLOG || OwnError "Unable To Install EWWW Image Optimizer"
 	echo -e "\033[36mInstalling Jetpack, Please Wait...\e[0m"
 	wp plugin --allow-root install jetpack &>> $INSTALLLOG || OwnError "Unable To Install Jetpack"
+	echo -e "\033[36mInstalling Varnish HTTP Cache, Please Wait...\e[0m"
+	wp plugin --allow-root install varnish-http-purge &>> $INSTALLLOG || OwnError "Unable To Install Varnish HTTP Purge"
 
 	# Activate Nginx Helper
 	wp plugin --allow-root activate nginx-helper $NETWORKACTIVATE &>> $INSTALLLOG || OwnError "Unable To Activate Nginx Helper Plugin"
