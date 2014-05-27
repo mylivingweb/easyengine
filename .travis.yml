@@ -1,0 +1,18 @@
+language: bash
+
+
+
+before_install:
+
+
+before_script
+- yum remove mysql* php*
+
+script
+- sudo bash -x install.sh
+
+- sudo sed -i "s/htpasswduser.*/htpasswduser = easyengine/" /etc/easyengine/ee.conf
+- sudo sed -i "s/htpasswdpass.*/htpasswdpass = easyengine/" /etc/easyengine/ee.conf
+- sudo bash ee system install
+- sudo ee system status
+- sudo ee system restart
