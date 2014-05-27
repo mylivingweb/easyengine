@@ -11,10 +11,12 @@ easyengine (ee) is a linux shell-script collection, which makes it easy to manag
 **This script will partially work for now**
 - script adds REPL, NGINX, and REMI repos
 - chkconfig for nginx, mysql, and php-fpm
-- secures mysql install 
+- secures mysql install
+- installs wordfence, ewww image optimizer, and jetpack
 
 **things left to do**
 - add iptables rules for 80,443 and potentially ssh 
+- visit varnish caching
 
 
 ## Quick Start
@@ -33,6 +35,8 @@ ee site create example.com --wp                  # install wordpress without any
 ee site create example.com --w3tc                # install wordpress with w3-total-cache plugin 
 ee site create example.com --wpsc                # install wordpress with wp-super-cache plugin 
 ee site create example.com --wpfc                # install wordpress + nginx fastcgi_cache
+ee site disable example.com 					 # moves .conf file to directory and reloads nginx
+ee site enable example.com						 # moves .conf file from directory to conf.d and reload nginx
 ```
 
 ### WordPress Multsite with subdirectory 

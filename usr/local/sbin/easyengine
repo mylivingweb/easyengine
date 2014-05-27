@@ -1094,6 +1094,12 @@ NGINXHELPER()
 	cd /var/www/$DOMAIN/htdocs/
 	echo -e "\033[36mInstalling Nginx Helper Plugin, Please Wait...\e[0m"
 	wp plugin --allow-root install nginx-helper &>> $INSTALLLOG || OwnError "Unable To Install Nginx Helper"
+	echo -e "\033[36mInstalling Wordfence Plugin, Please Wait...\e[0m"
+	wp plugin --allow-root install wordfence &>> $INSTALLLOG || OwnError "Unable To Install Wordfence"
+	echo -e "\033[36mInstalling EWWW Image Optimizer, Please Wait...\e[0m"
+	wp plugin --allow-root install ewww-image-optimizer &>> $INSTALLLOG || OwnError "Unable To Install EWWW Image Optimizer"
+	echo -e "\033[36mInstalling Jetpack, Please Wait...\e[0m"
+	wp plugin --allow-root install jetpack &>> $INSTALLLOG || OwnError "Unable To Install Jetpack"
 
 	# Activate Nginx Helper
 	wp plugin --allow-root activate nginx-helper $NETWORKACTIVATE &>> $INSTALLLOG || OwnError "Unable To Activate Nginx Helper Plugin"
@@ -1120,7 +1126,7 @@ SETUPWPNETWORK()
 REMOVEDB()
 {
 	# HTML & PHP Website Doesn't Have Database
-	head -n1 /etc/nginx/conf.d/$DOMAIN | egrep -e 'HTML|PHP' &>> $INSTALLLOG
+	head -n1 /etc/nginx/conf.d/$DOMAIN.conf | egrep -e 'HTML|PHP' &>> $INSTALLLOG
 	if [ $? -ne 0 ]
 	then
 		# MySQL Information
@@ -1144,10 +1150,23 @@ REMOVEDB()
 		fi
 
 		if [ "$ANSWER" = "y" ]
-		then
+		then 
+		#added to get root user to drop wp user from mysql
+		read -p "Enter The MySQL Username [root]: " MYSQLUSER
+			# If Enter Is Pressed, Then Use root as MySQL User
+			if [[ $MYSQLUSER = "" ]]
+			then
+				MYSQLUSER=root
+			fi
+
+			# Turn Off Echo For Passwords
+			stty -echo
+			read -p "Enter The MySQL Password: " MYSQLPASS
+			stty echo
+			echo
+			
 			# Remove Database
-			mysql -h $MYSQLHOST -u $MYSQLUSER -p$MYSQLPASS -e "drop database \`$WPDBNAME\`" \
-			|| OwnError "Unable To Drop $WPDBNAME Database"
+			mysqladmin -h $MYSQLHOST -u $WPDBUSER -p$WPDBPASS drop $WPDBNAME || OwnError "Unable To Drop $WPDBNAME Database"
 
 			# Never Remove root User
 			if [ "$WPDBUSER" != "root" ]
@@ -1207,8 +1226,7 @@ REMOVENGINXCONF()
 	if [ "$ANSWER" = "y" ]
 	then
 		# Remove Webroot
-		rm -rf /etc/nginx/conf.d/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN \
-		|| OwnError "Unable To Remove $DOMAIN Nginx Configuration"
+		rm -rf /etc/nginx/conf.d/$DOMAIN.conf || OwnError "Unable To Remove $DOMAIN Nginx Configuration"
 	else
 		# User Denied Messages
 		echo -e "\033[31mUser Denied To Remove $DOMAIN Nginx Configuration.\e[0m"
@@ -1702,7 +1720,7 @@ then
 			MYSQLRESTART
 
 			# Display Success Message
-			echo -e "\033[36mNginx php WP-CLI MySQL Postfix phpMyAdmin Successfully Installed\e[0m"
+			echo -e "\033[36mNginx php-fpm WP-CLI MySQL Successfully Installed\e[0m"
 			echo -e "\033[36mYou Can Now Create Your First WordPress Site Powered By Nginx Using:\e[0m"
 			echo -e "\033[37mee site create example.com --wp\e[0m"
 
@@ -2223,9 +2241,6 @@ then
 				TOTALCACHENGINX
 				PERMISSIONANDGIT
 
-				# Setup phpMyAdmin
-				#ln -s /var/www/22222/htdocs/db/pma /var/www/$DOMAIN/htdocs/pma
-
 				# Display WordPress Plugin Configuration Message
 				echo
 				echo -e "\033[37mWordPress Admin Username: $WPADMINUSER\e[0m"
@@ -2285,8 +2300,6 @@ then
 				TOTALCACHENGINX
 				PERMISSIONANDGIT
 
-				# Setup phpMyAdmin
-				#ln -s /var/www/22222/htdocs/db/pma /var/www/$DOMAIN/htdocs/pma
 
 				# Display WordPress Plugin Configuration Message
 				echo
@@ -2320,9 +2333,6 @@ then
 				# Setup WordPress SubDirectory Network
 				SETUPWPNETWORK
 				PERMISSIONANDGIT
-
-				# Setup phpMyAdmin
-				#ln -s /var/www/22222/htdocs/db/pma /var/www/$DOMAIN/htdocs/pma
 
 				# Display Success Message
 				echo
@@ -2407,9 +2417,6 @@ then
 				TOTALCACHENGINX
 				PERMISSIONANDGIT
 
-				# Setup phpMyAdmin
-				#ln -s /var/www/22222/htdocs/db/pma /var/www/$DOMAIN/htdocs/pma
-
 				# Display WordPress Plugin Configuration Message
 				echo
 				echo -e "\033[37mWordPress Admin Username: $WPADMINUSER\e[0m"
@@ -2433,13 +2440,9 @@ then
 		# Check SITENAME Is Empty Or Not
 		SITENAMECHECK=$3
 		EESITENAME
-
+	    mv /usr/share/easyengine/disabled-sites/$DOMAIN.conf /etc/nginx/conf.d/$DOMAIN.conf || OwnError "Unable To move conf file For $DOMAIN"
 		# Reload Nginx Configuration
 		NGINXRELOAD
-
-		# Take Nginx Configuration In Git Version Control
-		EEGITDIR=/etc/nginx
-		EEGITMESSAGE="Enable Website: $DOMAIN"
 
 	elif [ "$2" = "disable" ]
 	then
@@ -2449,8 +2452,7 @@ then
 		EESITENAME
 
 		echo -e "\033[36mRemoving conf file $DOMAIN\e[0m"
-		rm /etc/nginx/conf.d/$DOMAIN.conf \
-		|| OwnError "Unable To Remove conf file For $DOMAIN"
+		mv /etc/nginx/conf.d/$DOMAIN.conf /usr/share/easyengine/disabled-sites/$DOMAIN.conf	|| OwnError "Unable To Move conf file For $DOMAIN"
 
 		# Reload Nginx Configuration
 		NGINXRELOAD
