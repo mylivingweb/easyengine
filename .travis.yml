@@ -5,10 +5,10 @@ language: bash
 before_install:
 
 
-before_script
-- yum remove mysql* php*
+before_script:
+- sudo yum remove mysql* php*
 
-script
+script:
 - sudo bash -x install.sh
 
 - sudo sed -i "s/htpasswduser.*/htpasswduser = easyengine/" /etc/easyengine/ee.conf
